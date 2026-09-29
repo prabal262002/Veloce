@@ -1,4 +1,6 @@
+import useShop from '../context/useShop';
 export default function Header() {
+  const { wishlist, cart } = useShop();
   return (
     <header className="site-header">
       <nav className="navbar navbar-expand veloce-navbar">
@@ -20,10 +22,10 @@ export default function Header() {
 
           <div className="d-flex align-items-center gap-4 text-nowrap veloce-actions">
             <a href="#wishlist">
-              <span aria-hidden="true">♡</span> WISHLIST <b>00</b>
+              <span aria-hidden="true">♡</span> WISHLIST <b>{wishlist.length}</b>
             </a>
             <a href="#cart">
-              <span aria-hidden="true">▱</span> CART <b>00</b>
+              <span aria-hidden="true">▱</span> CART <b>{cart.length}</b>
             </a>
           </div>
         </div>

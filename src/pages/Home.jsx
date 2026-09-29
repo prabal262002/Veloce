@@ -1,8 +1,17 @@
-import useFetch from '../useFetch';
+import useShop from '../context/useShop';
 
 export default function Home() {
-  const { data, loading, error } = useFetch('https://veloce-be-nine.vercel.app/products');
-  const featuredProducts = Array.isArray(data?.products) ? data.products.slice(0, 3) : [];
+  const {
+    products,
+    loading,
+    error,
+    cart,
+    wishlist,
+    addToCart,
+    decrementCartQuantity,
+    toggleWishlist,
+  } = useShop();
+  const featuredProducts = products.slice(0, 3);
 
   if (loading) {
     return <div className="home-page"><section className="featured-products"><p className="featured-products__eyebrow">Loading products...</p></section></div>;
@@ -39,6 +48,15 @@ export default function Home() {
                 <span className="product-card__number">
                   {String(index + 1).padStart(2, '0')}
                 </span>
+                <button
+                  type="button"
+                  className={`product-card__wishlist${wishlist.includes(String(product._id)) ? ' is-active' : ''}`}
+                  aria-label={`${wishlist.includes(String(product._id)) ? 'Remove' : 'Add'} ${product.name} ${wishlist.includes(String(product._id)) ? 'from' : 'to'} wishlist`}
+                  aria-pressed={wishlist.includes(String(product._id))}
+                  onClick={() => toggleWishlist(product._id)}
+                >
+                  {wishlist.includes(String(product._id)) ? '♥' : '♡'}
+                </button>
               </div>
               <div className="product-card__details">
                 <p className="product-card__category">{product.category}</p>
@@ -47,14 +65,48 @@ export default function Home() {
                   <span className="product-card__price">${Number(product.price).toFixed(2)}</span>
                 </div>
 
-                <div className="product-card__actions">
-                  <button type="button" className="product-card__button product-card__button--primary">
-                    Add to cart
-                  </button>
-                  <button type="button" className="product-card__button product-card__button--ghost">
-                    Wishlist
-                  </button>
-                </div>
+                {(() => {
+                  const productId = String(product._id);
+                  const cartItem = cart.find((item) => item.productId === productId);
+                  const quantity = cartItem?.quantity ?? 0;
+                  const atStockLimit = quantity >= Number(product.stock ?? 0);
+
+                  return (
+                    <div className="product-card__actions">
+                      {quantity === 0 ? (
+                        <button
+                          type="button"
+                          className="product-card__button product-card__button--primary"
+                          disabled={Number(product.stock ?? 0) === 0}
+                          onClick={() => addToCart(product)}
+                        >
+                          {Number(product.stock ?? 0) === 0 ? 'Out of stock' : 'Add to cart'}
+                        </button>
+                      ) : (
+                        <div className="product-card__quantity" aria-label={`${quantity} in cart`}>
+                          <button
+                            type="button"
+                            className="product-card__quantity-button"
+                            aria-label={`Remove one ${product.name} from cart`}
+                            onClick={() => decrementCartQuantity(product)}
+                          >
+                            −
+                          </button>
+                          <span className="product-card__quantity-value" aria-live="polite">{quantity}</span>
+                          <button
+                            type="button"
+                            className="product-card__quantity-button"
+                            aria-label={`Add one ${product.name} to cart`}
+                            disabled={atStockLimit}
+                            onClick={() => addToCart(product)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </article>
           ))}
