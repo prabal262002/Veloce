@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useShop from '../context/useShop';
 
 export default function Home() {
+  const navigate = useNavigate();
   const {
     products,
     loading,
@@ -8,10 +11,39 @@ export default function Home() {
     cart,
     wishlist,
     addToCart,
-    decrementCartQuantity,
     toggleWishlist,
   } = useShop();
+  const [addedProductId, setAddedProductId] = useState(null);
   const featuredProducts = products.slice(0, 3);
+
+  useEffect(() => {
+    if (!addedProductId) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAddedProductId(null);
+    }, 2400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [addedProductId]);
+
+  const handleAddToCart = (product) => {
+    addToCart(product);
+    setAddedProductId(String(product._id));
+  };
+
+  const handlePrimaryAction = (product) => {
+    const productId = String(product._id);
+    const inCart = cart.some((item) => String(item.productId) === productId);
+
+    if (inCart) {
+      navigate('/checkout');
+      return;
+    }
+
+    handleAddToCart(product);
+  };
 
   if (loading) {
     return <div className="home-page"><section className="featured-products"><p className="featured-products__eyebrow">Loading products...</p></section></div>;
@@ -37,7 +69,20 @@ export default function Home() {
 
         <div className="product-grid">
           {featuredProducts.map((product, index) => (
-            <article className="product-card" key={product._id || product.name}>
+            <article
+              className="product-card"
+              key={product._id || product.name}
+              role="button"
+              tabIndex={0}
+              aria-label={`View details for ${product.name}`}
+              onClick={() => navigate(`/product/${product._id}`)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  navigate(`/product/${product._id}`);
+                }
+              }}
+            >
               <div className="product-card__image-wrap">
                 <img
                   className="product-card__image"
@@ -53,7 +98,10 @@ export default function Home() {
                   className={`product-card__wishlist${wishlist.includes(String(product._id)) ? ' is-active' : ''}`}
                   aria-label={`${wishlist.includes(String(product._id)) ? 'Remove' : 'Add'} ${product.name} ${wishlist.includes(String(product._id)) ? 'from' : 'to'} wishlist`}
                   aria-pressed={wishlist.includes(String(product._id))}
-                  onClick={() => toggleWishlist(product._id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleWishlist(product._id);
+                  }}
                 >
                   {wishlist.includes(String(product._id)) ? '♥' : '♡'}
                 </button>
@@ -67,43 +115,22 @@ export default function Home() {
 
                 {(() => {
                   const productId = String(product._id);
-                  const cartItem = cart.find((item) => item.productId === productId);
-                  const quantity = cartItem?.quantity ?? 0;
-                  const atStockLimit = quantity >= Number(product.stock ?? 0);
+                  const inCart = cart.some((item) => String(item.productId) === productId);
+                  const outOfStock = Number(product.stock ?? 0) === 0;
 
                   return (
                     <div className="product-card__actions">
-                      {quantity === 0 ? (
-                        <button
-                          type="button"
-                          className="product-card__button product-card__button--primary"
-                          disabled={Number(product.stock ?? 0) === 0}
-                          onClick={() => addToCart(product)}
-                        >
-                          {Number(product.stock ?? 0) === 0 ? 'Out of stock' : 'Add to cart'}
-                        </button>
-                      ) : (
-                        <div className="product-card__quantity" aria-label={`${quantity} in cart`}>
-                          <button
-                            type="button"
-                            className="product-card__quantity-button"
-                            aria-label={`Remove one ${product.name} from cart`}
-                            onClick={() => decrementCartQuantity(product)}
-                          >
-                            −
-                          </button>
-                          <span className="product-card__quantity-value" aria-live="polite">{quantity}</span>
-                          <button
-                            type="button"
-                            className="product-card__quantity-button"
-                            aria-label={`Add one ${product.name} to cart`}
-                            disabled={atStockLimit}
-                            onClick={() => addToCart(product)}
-                          >
-                            +
-                          </button>
-                        </div>
-                      )}
+                      <button
+                        type="button"
+                        className={`product-card__button product-card__button--primary${inCart ? ' is-in-cart' : ''}`}
+                        disabled={outOfStock}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handlePrimaryAction(product);
+                        }}
+                      >
+                        {outOfStock ? 'Out of stock' : inCart ? 'Proceed to checkout' : 'Add to cart'}
+                      </button>
                     </div>
                   );
                 })()}
@@ -112,6 +139,12 @@ export default function Home() {
           ))}
         </div>
       </section>
+      {addedProductId && (
+        <div className="cart-feedback" role="status" aria-live="polite">
+          <span className="cart-feedback__check" aria-hidden="true">✓</span>
+          <span>Added to cart</span>
+        </div>
+      )}
     </div>
   );
 }
