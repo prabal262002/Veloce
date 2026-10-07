@@ -14,7 +14,27 @@ export default function Home() {
     toggleWishlist,
   } = useShop();
   const [addedProductId, setAddedProductId] = useState(null);
-  const featuredProducts = products.slice(0, 3);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortOrder, setSortOrder] = useState('featured');
+  const categories = [...new Set(products.map((product) => product.category).filter(Boolean))];
+  const filteredProducts = products.filter((product) => {
+    const price = Number(product.price ?? 0);
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+    const matchesAvailability = !inStockOnly || Number(product.stock ?? 0) > 0;
+    const matchesMinPrice = minPrice === '' || price >= Number(minPrice);
+    const matchesMaxPrice = maxPrice === '' || price <= Number(maxPrice);
+    return matchesCategory && matchesAvailability && matchesMinPrice && matchesMaxPrice;
+  });
+  if (sortOrder === 'price-asc') {
+    filteredProducts.sort((first, second) => Number(first.price ?? 0) - Number(second.price ?? 0));
+  } else if (sortOrder === 'price-desc') {
+    filteredProducts.sort((first, second) => Number(second.price ?? 0) - Number(first.price ?? 0));
+  } else if (sortOrder === 'name-asc') {
+    filteredProducts.sort((first, second) => first.name.localeCompare(second.name));
+  }
 
   useEffect(() => {
     if (!addedProductId) {
@@ -36,13 +56,27 @@ export default function Home() {
   const handlePrimaryAction = (product) => {
     const productId = String(product._id);
     const inCart = cart.some((item) => String(item.productId) === productId);
-
+ 
     if (inCart) {
       navigate('/checkout');
       return;
     }
 
     handleAddToCart(product);
+  };
+
+  const toggleCategory = (category) => {
+    setSelectedCategories((current) => current.includes(category)
+      ? current.filter((item) => item !== category)
+      : [...current, category]);
+  };
+
+  const clearFilters = () => {
+    setSelectedCategories([]);
+    setInStockOnly(false);
+    setMinPrice('');
+    setMaxPrice('');
+    setSortOrder('featured');
   };
 
   if (loading) {
@@ -62,13 +96,94 @@ export default function Home() {
             <h1 id="featured-title">Gear up. Get out.</h1>
             <p className="featured-products__intro">
               Road-ready essentials for every mile ahead.
-            </p>
+            </p> 
           </div>
-          <span className="featured-products__count">FEATURED / {String(featuredProducts.length).padStart(2, '0')}</span>
+          <span className="featured-products__count">GEAR / {String(filteredProducts.length).padStart(2, '0')}</span>
         </div>
 
-        <div className="product-grid">
-          {featuredProducts.map((product, index) => (
+        <div className="catalog-layout">
+          <aside className="catalog-filters" aria-label="Product filters">
+            <div className="catalog-filters__heading">
+              <h2>Filters</h2>
+              <button type="button" onClick={clearFilters}>Clear</button>
+            </div>
+            <fieldset className="catalog-filters__group">
+              <legend>Category</legend>
+              {categories.map((category) => (
+                <label className="catalog-filter-option" key={category}>
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category)}
+                    onChange={() => toggleCategory(category)}
+                  />
+                  <span>{category}</span>
+                </label>
+              ))}
+            </fieldset>
+            <fieldset className="catalog-filters__group">
+              <legend>Availability</legend>
+              <label className="catalog-filter-option">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(event) => setInStockOnly(event.target.checked)}
+                />
+                <span>In stock only</span>
+              </label>
+            </fieldset>
+            <fieldset className="catalog-filters__group">
+              <legend>Price range</legend>
+              <label className="catalog-price-input">
+                <span>Min</span>
+                <span className="catalog-price-input__field">
+                  <span aria-hidden="true">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputMode="decimal"
+                    placeholder="No min"
+                    aria-label="Minimum price"
+                    value={minPrice}
+                    onChange={(event) => setMinPrice(event.target.value)}
+                  />
+                </span>
+              </label>
+              <label className="catalog-price-input">
+                <span>Max</span>
+                <span className="catalog-price-input__field">
+                  <span aria-hidden="true">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputMode="decimal"
+                    placeholder="No max"
+                    aria-label="Maximum price"
+                    value={maxPrice}
+                    onChange={(event) => setMaxPrice(event.target.value)}
+                  />
+                </span>
+              </label>
+            </fieldset>
+          </aside>
+
+          <div className="catalog-results">
+            <div className="catalog-results__bar">
+              <span>{filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}</span>
+              <label className="catalog-sort">
+                <span>Sort</span>
+                <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort products">
+                  <option value="featured">Featured</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                  <option value="name-asc">Name: A to Z</option>
+                </select>
+              </label>
+            </div>
+            {filteredProducts.length ? (
+              <div className="product-grid">
+          {filteredProducts.map((product, index) => (
             <article
               className="product-card"
               key={product._id || product.name}
@@ -137,6 +252,15 @@ export default function Home() {
               </div>
             </article>
           ))}
+              </div>
+            ) : (
+              <div className="catalog-empty">
+                <h2>No gear matches these filters</h2>
+                <p>Try another category or clear your filters.</p>
+                <button type="button" className="product-card__button product-card__button--ghost" onClick={clearFilters}>Clear filters</button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
       {addedProductId && (

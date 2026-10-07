@@ -23,7 +23,7 @@ export default function Checkout() {
     <div className="checkout-page">
       <div className="checkout-shell">
         <div className="checkout-header">
-          <div>
+           <div>
             <p className="featured-products__eyebrow">VELOCE / CHECKOUT</p>
             <h1>Review your order</h1>
           </div>
@@ -41,6 +41,7 @@ export default function Checkout() {
           <div className="checkout-layout">
             <div className="checkout-items">
               {items.map((item) => (
+
                 <div key={item._id} className="checkout-item">
                   <img src={item.images?.[0] || 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg'} alt={item.name} />
                   <div className="checkout-item__details">
