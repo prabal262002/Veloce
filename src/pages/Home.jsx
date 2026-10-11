@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useShop from '../context/useShop';
+import RangeSliderModule from 'react-range-slider-input';
+import 'react-range-slider-input/dist/style.css';
+
+const RangeSlider = RangeSliderModule.default;
 
 export default function Home() {
   const navigate = useNavigate();
@@ -16,17 +20,17 @@ export default function Home() {
   const [addedProductId, setAddedProductId] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  const [priceValue, setPriceValue] = useState(null);
   const [sortOrder, setSortOrder] = useState('featured');
   const categories = [...new Set(products.map((product) => product.category).filter(Boolean))];
+  const maximumProductPrice = Math.max(1, ...products.map((product) => Number(product.price) || 0));
+  const activePriceRange = priceValue ?? [0, maximumProductPrice];
   const filteredProducts = products.filter((product) => {
     const price = Number(product.price ?? 0);
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
     const matchesAvailability = !inStockOnly || Number(product.stock ?? 0) > 0;
-    const matchesMinPrice = minPrice === '' || price >= Number(minPrice);
-    const matchesMaxPrice = maxPrice === '' || price <= Number(maxPrice);
-    return matchesCategory && matchesAvailability && matchesMinPrice && matchesMaxPrice;
+    const matchesPrice = price >= activePriceRange[0] && price <= activePriceRange[1];
+    return matchesCategory && matchesAvailability && matchesPrice;
   });
   if (sortOrder === 'price-asc') {
     filteredProducts.sort((first, second) => Number(first.price ?? 0) - Number(second.price ?? 0));
@@ -74,8 +78,7 @@ export default function Home() {
   const clearFilters = () => {
     setSelectedCategories([]);
     setInStockOnly(false);
-    setMinPrice('');
-    setMaxPrice('');
+    setPriceValue(null);
     setSortOrder('featured');
   };
 
@@ -133,38 +136,20 @@ export default function Home() {
             </fieldset>
             <fieldset className="catalog-filters__group">
               <legend>Price range</legend>
-              <label className="catalog-price-input">
-                <span>Min</span>
-                <span className="catalog-price-input__field">
-                  <span aria-hidden="true">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    inputMode="decimal"
-                    placeholder="No min"
-                    aria-label="Minimum price"
-                    value={minPrice}
-                    onChange={(event) => setMinPrice(event.target.value)}
-                  />
-                </span>
-              </label>
-              <label className="catalog-price-input">
-                <span>Max</span>
-                <span className="catalog-price-input__field">
-                  <span aria-hidden="true">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    inputMode="decimal"
-                    placeholder="No max"
-                    aria-label="Maximum price"
-                    value={maxPrice}
-                    onChange={(event) => setMaxPrice(event.target.value)}
-                  />
-                </span>
-              </label>
+              <div className="catalog-price-range__values" aria-live="polite">
+                <span>${activePriceRange[0].toFixed(2)}</span>
+                <span aria-hidden="true">to</span>
+                <span>${activePriceRange[1].toFixed(2)}</span>
+              </div>
+              <RangeSlider
+                className="catalog-filters__price-slider"
+                min={0}
+                max={maximumProductPrice}
+                step="any"
+                value={activePriceRange}
+                onInput={setPriceValue}
+                ariaLabel={['Minimum price', 'Maximum price']}
+              />  
             </fieldset>
           </aside>
 
