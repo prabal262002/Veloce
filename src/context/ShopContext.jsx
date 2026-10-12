@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import ShopContext from './shopContext';
 
 const PRODUCTS_URL = 'https://veloce-be-nine.vercel.app/products';
+const API_URL = 'http://localhost:5001';
 
 function readStoredValue(key, fallback) {
   try {
@@ -22,6 +23,8 @@ export default function ShopProvider({ children }) {
   const [error, setError] = useState(null);
   const [cart, setCart] = useState(() => readStoredValue('veloce-cart', []));
   const [wishlist, setWishlist] = useState(() => readStoredValue('veloce-wishlist', []));
+  const [token, setToken] = useState(() => readStoredValue('veloce-auth-token', ''));
+  const [user, setUser] = useState(() => readStoredValue('veloce-auth-user', null));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -56,6 +59,63 @@ export default function ShopProvider({ children }) {
   useEffect(() => {
     window.localStorage.setItem('veloce-wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
+
+  useEffect(() => {
+    if (token) {
+      window.localStorage.setItem('veloce-auth-token', JSON.stringify(token));
+    } else {
+      window.localStorage.removeItem('veloce-auth-token');
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (user) {
+      window.localStorage.setItem('veloce-auth-user', JSON.stringify(user));
+    } else {
+      window.localStorage.removeItem('veloce-auth-user');
+    }
+  }, [user]);
+
+  async function signup(formData) {
+    const response = await fetch(`${API_URL}/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Signup failed.');
+    }
+
+    setToken(result.token || '');
+    setUser(result.user || null);
+    return result;
+  }
+
+  async function login(formData) {
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Login failed.');
+    }
+
+    setToken(result.token || '');
+    setUser(result.user || null);
+    return result;
+  }
+
+  function logout() {
+    setToken('');
+    setUser(null);
+  }
 
   function changeCartQuantity(product, amount) {
     const productId = getProductId(product);
@@ -105,6 +165,12 @@ export default function ShopProvider({ children }) {
     error,
     cart,
     wishlist,
+    user,
+    token,
+    isLoggedIn: Boolean(token && user),
+    signup,
+    login,
+    logout,
     addToCart,
     decrementCartQuantity,
     toggleWishlist,

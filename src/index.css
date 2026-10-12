@@ -133,6 +133,302 @@ body {
   font-weight: 400;
 }
 
+.veloce-auth-button,
+.veloce-profile-button,
+.veloce-auth-submit {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #121212;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: 0;
+  transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+
+.veloce-auth-button:hover,
+.veloce-profile-button:hover,
+.veloce-auth-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(230, 57, 70, 0.18);
+}
+
+.veloce-profile-wrap {
+  position: relative;
+}
+
+.veloce-profile-button {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: transparent;
+  color: var(--text-h);
+  border-color: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  padding: 0;
+}
+
+.veloce-profile-button span {
+  font-size: 1.1rem;
+  color: var(--text-h);
+}
+
+.veloce-profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  background: #171717;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  z-index: 50;
+}
+
+.veloce-profile-menu__item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text-h);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06rem;
+  padding: 0.8rem 1rem;
+  text-align: left;
+  text-decoration: none;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.veloce-profile-menu__item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.veloce-profile-menu__item--button {
+  cursor: pointer;
+}
+
+.veloce-auth-modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+}
+
+.veloce-auth-modal__panel {
+  width: min(100%, 420px);
+  background: #171819;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.veloce-auth-modal__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.veloce-auth-modal__header h3 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+  line-height: 1;
+}
+
+.veloce-auth-modal__close {
+  border: 0;
+  background: transparent;
+  color: var(--text-h);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.veloce-auth-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.veloce-form-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.veloce-form-group label {
+  color: var(--text-h);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08rem;
+}
+
+.veloce-form-group input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #3a3a3a;
+  background: #1b1b1b;
+  color: var(--text-h);
+  font-family: var(--sans);
+}
+
+.veloce-form-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.14);
+}
+
+.veloce-auth-error {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(230, 57, 70, 0.55);
+  background: rgba(230, 57, 70, 0.08);
+  color: #ffb8be;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
+.veloce-auth-switch {
+  color: var(--text);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.veloce-auth-switch button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.veloce-profile-page {
+  padding: 4rem 1rem 5rem;
+  background: linear-gradient(120deg, rgba(230, 57, 70, 0.03), transparent 42%), #141414;
+}
+
+.veloce-profile-shell {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+}
+
+.veloce-profile-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.veloce-profile-header h1 {
+  margin: 0;
+}
+
+.veloce-profile-logout {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-h);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08rem;
+  padding: 0.8rem 1rem;
+}
+
+.veloce-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.veloce-profile-card {
+  background: #171819;
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+}
+
+.veloce-profile-card h2 {
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+}
+
+.veloce-profile-field {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.veloce-profile-field label {
+  color: var(--text-h);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08rem;
+}
+
+.veloce-profile-field input {
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid #36393b;
+  background: #1d1e20;
+  color: var(--text-h);
+}
+
+.veloce-address-item {
+  border: 1px solid #323436;
+  background: #1d1e20;
+  padding: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.veloce-address-item strong,
+.veloce-address-item p {
+  color: var(--text-h);
+}
+
+.veloce-address-item p {
+  margin: 0.25rem 0 0;
+  color: var(--text);
+}
+
+.veloce-profile-empty-text {
+  color: var(--text);
+  margin: 0;
+}
+
+.veloce-profile-empty {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+  padding: 4rem 1rem;
+  background: linear-gradient(120deg, rgba(230, 57, 70, 0.03), transparent 42%), #141414;
+}
+
+.veloce-profile-empty__card {
+  width: min(100%, 540px);
+  background: #171819;
+  border: 1px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+}
+
+.veloce-profile-empty__card h1 {
+  margin-top: 0;
+}
+
+.veloce-profile-empty__card p {
+  color: var(--text);
+}
+
+.veloce-auth-submit--inline {
+  display: inline-block;
+  text-decoration: none;
+}
+
 .site-footer {
   width: 100%;
   max-width: 100%;

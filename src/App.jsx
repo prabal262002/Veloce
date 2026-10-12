@@ -4,6 +4,7 @@ import Home from './pages/Home.jsx'
 import ProductDetails from './pages/ProductDetails.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Wishlist from './pages/Wishlist.jsx'
+import Profile from './pages/Profile.jsx'
 import {Routes, Route} from "react-router-dom";
 import ShopProvider from './context/ShopContext.jsx'
 
@@ -19,6 +20,7 @@ function App() {
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </main>
 
