@@ -1,5 +1,11 @@
 # React + Vite
 
+## Account and cart storage
+
+Authentication uses an HttpOnly session cookie; the frontend does not store auth or cart data in browser storage. Signed-in carts are saved on the user document in MongoDB and restored through the backend. Guest carts and wishlists exist only in memory and are cleared on refresh.
+
+The frontend uses `https://veloce-be-nine.vercel.app` for the API by default in both development and production. Set `VITE_API_URL` at build time to use a different backend. Configure the backend's `FRONTEND_ORIGIN` to the exact frontend origin and set `JWT_SECRET` for signed sessions. Production cookies require HTTPS.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

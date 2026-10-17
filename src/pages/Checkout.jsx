@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import useShop from '../context/useShop';
 
 export default function Checkout() {
-  const { cart, products, addToCart, decrementCartQuantity } = useShop();
+  const { cart, products, addToCart, decrementCartQuantity, authReady, isLoggedIn, cartError } = useShop();
 
   const items = cart
     .map((item) => {
@@ -18,6 +18,38 @@ export default function Checkout() {
     .filter(Boolean);
 
   const subtotal = items.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+
+  if (!authReady) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-shell">
+          <div className="checkout-empty" role="status">Restoring your account...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-shell">
+          <div className="checkout-header">
+            <div>
+              <p className="featured-products__eyebrow">VELOCE / CHECKOUT</p>
+              <h1>Sign in to continue</h1>
+            </div>
+            <Link className="product-details__link" to="/">Continue shopping</Link>
+          </div>
+          <div className="checkout-empty">
+            <p>Your cart is saved to your account after you sign in.</p>
+            <p className="checkout-auth-note">
+              Use the account button in the header to sign up or log in. Guest cart items are temporary and clear when this page refreshes.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="checkout-page">
@@ -40,6 +72,7 @@ export default function Checkout() {
         ) : (
           <div className="checkout-layout">
             <div className="checkout-items">
+              {cartError && <p className="checkout-cart-error" role="alert">{cartError}</p>}
               {items.map((item) => (
 
                 <div key={item._id} className="checkout-item">

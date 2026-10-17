@@ -1,17 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ShopContext from './shopContext';
 
-const PRODUCTS_URL = 'https://veloce-be-nine.vercel.app/products';
-const API_URL = 'http://localhost:5001';
-
-function readStoredValue(key, fallback) {
-  try {
-    const value = window.localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch {
-    return fallback;
-  }
-}
+const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.app';
+const PRODUCTS_URL = `${API_URL}/products`;
 
 function getProductId(product) {
   return String(product?._id ?? product?.id ?? product);
@@ -21,10 +12,13 @@ export default function ShopProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cart, setCart] = useState(() => readStoredValue('veloce-cart', []));
-  const [wishlist, setWishlist] = useState(() => readStoredValue('veloce-wishlist', []));
-  const [token, setToken] = useState(() => readStoredValue('veloce-auth-token', ''));
-  const [user, setUser] = useState(() => readStoredValue('veloce-auth-user', null));
+  const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [cartError, setCartError] = useState('');
+  const cartRef = useRef(cart);
+  const cartWriteQueue = useRef(Promise.resolve());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -52,94 +46,174 @@ export default function ShopProvider({ children }) {
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    window.localStorage.setItem('veloce-cart', JSON.stringify(cart));
-  }, [cart]);
+  async function refreshUser() {
+    try {
+      const response = await fetch(`${API_URL}/me`, { credentials: 'include' });
+      if (!response.ok) {
+        setUser(null);
+        cartRef.current = [];
+        setCart([]);
+        return null;
+      }
 
-  useEffect(() => {
-    window.localStorage.setItem('veloce-wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  useEffect(() => {
-    if (token) {
-      window.localStorage.setItem('veloce-auth-token', JSON.stringify(token));
-    } else {
-      window.localStorage.removeItem('veloce-auth-token');
+      const result = await response.json();
+      const nextUser = result.user || null;
+      setUser(nextUser);
+      const savedCart = nextUser?.cart || [];
+      cartRef.current = savedCart;
+      setCart(savedCart);
+      return nextUser;
+    } catch {
+      setCartError('Unable to restore your saved cart.');
+      return null;
     }
-  }, [token]);
+  }
 
   useEffect(() => {
-    if (user) {
-      window.localStorage.setItem('veloce-auth-user', JSON.stringify(user));
-    } else {
-      window.localStorage.removeItem('veloce-auth-user');
-    }
-  }, [user]);
+    let active = true;
 
-  async function signup(formData) {
-    const response = await fetch(`${API_URL}/signup`, {
-      method: 'POST',
+    async function restoreSession() {
+      try {
+        const response = await fetch(`${API_URL}/me`, { credentials: 'include' });
+        if (!response.ok) return;
+
+        const result = await response.json();
+        if (active) {
+          setUser(result.user);
+          const savedCart = result.user.cart || [];
+          cartRef.current = savedCart;
+          setCart(savedCart);
+        }
+      } catch {
+        if (active) setCartError('Unable to restore your saved cart.');
+      } finally {
+        if (active) setAuthReady(true);
+      }
+    }
+
+    restoreSession();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function sendCart(nextCart) {
+    const response = await fetch(`${API_URL}/cart`, {
+      method: 'PUT',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
+      body: JSON.stringify({ cart: nextCart }),
     });
-
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || 'Signup failed.');
+      throw new Error(result.error || 'Unable to save your cart.');
     }
 
-    setToken(result.token || '');
-    setUser(result.user || null);
+    return result.cart;
+  }
+
+  function persistCart(nextCart) {
+    cartWriteQueue.current = cartWriteQueue.current
+      .catch(() => {})
+      .then(() => sendCart(nextCart))
+      .then(() => setCartError(''))
+      .catch((saveError) => setCartError(saveError.message || 'Unable to save your cart.'));
+  }
+
+  function mergeCarts(savedCart, guestCart) {
+    const merged = new Map();
+
+    for (const item of savedCart) {
+      merged.set(String(item.productId), Number(item.quantity));
+    }
+
+    for (const item of guestCart) {
+      const productId = String(item.productId);
+      const existingQuantity = merged.get(productId) || 0;
+      const product = products.find((entry) => String(entry._id) === productId);
+      const stockLimit = Number(product?.stock ?? Infinity);
+      merged.set(productId, Math.min(existingQuantity + Number(item.quantity), stockLimit));
+    }
+
+    return [...merged].filter(([, quantity]) => quantity > 0).map(([productId, quantity]) => ({
+      productId,
+      quantity,
+    }));
+  }
+
+  async function authenticateWith(endpoint, formData) {
+    const guestCart = cartRef.current;
+    const response = await fetch(`${API_URL}/${endpoint}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || `${endpoint} failed.`);
+    }
+
+    const accountCart = result.user.cart || [];
+    const mergedCart = mergeCarts(accountCart, guestCart);
+    setUser(result.user);
+    cartRef.current = mergedCart;
+    setCart(mergedCart);
+    setAuthReady(true);
+
+    try {
+      const persistedCart = await sendCart(mergedCart);
+      cartRef.current = persistedCart;
+      setCart(persistedCart);
+      setCartError('');
+    } catch (saveError) {
+      setCartError(saveError.message || 'Unable to save your cart.');
+    }
+
     return result;
+  }
+
+  async function signup(formData) {
+    return authenticateWith('signup', formData);
   }
 
   async function login(formData) {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Login failed.');
-    }
-
-    setToken(result.token || '');
-    setUser(result.user || null);
-    return result;
+    return authenticateWith('login', formData);
   }
 
   function logout() {
-    setToken('');
+    fetch(`${API_URL}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     setUser(null);
+    cartRef.current = [];
+    setCart([]);
+    setCartError('');
   }
 
   function changeCartQuantity(product, amount) {
     const productId = getProductId(product);
     const stock = Number(product?.stock ?? 0);
-    setCart((currentCart) => {
-      const existingItem = currentCart.find((item) => item.productId === productId);
-      const nextQuantity = (existingItem?.quantity ?? 0) + amount;
+    const currentCart = cartRef.current;
+    const existingItem = currentCart.find((item) => String(item.productId) === productId);
+    const nextQuantity = (existingItem?.quantity ?? 0) + amount;
+    let nextCart;
 
-      if (nextQuantity <= 0) {
-        return currentCart.filter((item) => item.productId !== productId);
-      }
+    if (nextQuantity <= 0) {
+      nextCart = currentCart.filter((item) => String(item.productId) !== productId);
+    } else if (nextQuantity > stock) {
+      return;
+    } else if (existingItem) {
+      nextCart = currentCart.map((item) =>
+        String(item.productId) === productId ? { ...item, quantity: nextQuantity } : item,
+      );
+    } else {
+      nextCart = [...currentCart, { productId, quantity: nextQuantity }];
+    }
 
-      if (nextQuantity > stock) {
-        return currentCart;
-      }
-
-      if (existingItem) {
-        return currentCart.map((item) =>
-          item.productId === productId ? { ...item, quantity: nextQuantity } : item,
-        );
-      }
-
-      return [...currentCart, { productId, quantity: nextQuantity }];
-    });
+    cartRef.current = nextCart;
+    setCart(nextCart);
+    if (user) persistCart(nextCart);
   }
 
   function addToCart(product) {
@@ -164,13 +238,15 @@ export default function ShopProvider({ children }) {
     loading,
     error,
     cart,
+    cartError,
     wishlist,
     user,
-    token,
-    isLoggedIn: Boolean(token && user),
+    authReady,
+    isLoggedIn: Boolean(user),
     signup,
     login,
     logout,
+    refreshUser,
     addToCart,
     decrementCartQuantity,
     toggleWishlist,

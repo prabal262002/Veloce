@@ -87,7 +87,7 @@ export default function Home() {
   }
 
   if (error) {
-    return <div className="home-page"><section className="featured-products"><p className="featured-products__eyebrow">Unable to load products.</p></section></div>;
+    return <div className="home-page"><section className="featured-products"><p className="featured-products__eyebrow">Unable to load products: {error}</p></section></div>;
   }
 
   return (
