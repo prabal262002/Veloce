@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useShop from '../context/useShop';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.app';
+const API_URL = import.meta.env.VITE_API_URL
+  || (import.meta.env.DEV ? 'http://localhost:5001' : 'https://veloce-be-nine.vercel.app');
 
 const defaultAddressForm = {
   label: 'Home',
@@ -14,11 +15,11 @@ const defaultAddressForm = {
   state: '',
   postalCode: '',
   country: '',
-  isDefault: true,
+  isDefault: false,
 };
 
 export default function Profile() {
-  const { user, isLoggedIn, logout, refreshUser } = useShop();
+  const { user, isLoggedIn, logout, refreshUser, addAddress } = useShop();
   const [addressForm, setAddressForm] = useState(defaultAddressForm);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState('');
@@ -51,20 +52,8 @@ export default function Profile() {
         isDefault: user?.addresses?.length ? addressForm.isDefault : true,
       };
 
-      const response = await fetch(`${API_URL}/addresses`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Unable to save address.');
-      }
-
-      await refreshUser();
-      setAddressForm({ ...defaultAddressForm, isDefault: !user?.addresses?.length });
+      await addAddress(payload);
+      setAddressForm(defaultAddressForm);
     } catch (error) {
       setAddressError(error.message || 'Unable to save address.');
     } finally {

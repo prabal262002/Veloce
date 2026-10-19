@@ -1,8 +1,37 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useShop from '../context/useShop';
 
+const defaultAddressForm = {
+  label: 'Home',
+  fullName: '',
+  phone: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  state: '',
+  postalCode: '',
+  country: '',
+  isDefault: false,
+};
+
 export default function Checkout() {
-  const { cart, products, addToCart, decrementCartQuantity, authReady, isLoggedIn, cartError } = useShop();
+  const {
+    cart,
+    products,
+    addToCart,
+    decrementCartQuantity,
+    authReady,
+    isLoggedIn,
+    cartError,
+    user,
+    addAddress,
+  } = useShop();
+  const [selectedAddressId, setSelectedAddressId] = useState('');
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [addressError, setAddressError] = useState('');
+  const [addressForm, setAddressForm] = useState(defaultAddressForm);
 
   const items = cart
     .map((item) => {
@@ -18,6 +47,41 @@ export default function Checkout() {
     .filter(Boolean);
 
   const subtotal = items.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+  const addresses = user?.addresses || [];
+  const selectedAddress = addresses.find((address) => String(address._id) === selectedAddressId)
+    || addresses.find((address) => address.isDefault)
+    || addresses[0];
+
+  function handleAddressChange(event) {
+    const { name, value, type, checked } = event.target;
+    setAddressForm((currentForm) => ({
+      ...currentForm,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  }
+
+  async function handleAddressSubmit(event) {
+    event.preventDefault();
+    setAddressError('');
+    setIsSavingAddress(true);
+
+    try {
+      const payload = Object.fromEntries(
+        Object.entries(addressForm).map(([key, value]) => [
+          key,
+          typeof value === 'string' ? value.trim() : value,
+        ]),
+      );
+      const result = await addAddress(payload);
+      setSelectedAddressId(String(result.address._id));
+      setAddressForm(defaultAddressForm);
+      setIsAddingAddress(false);
+    } catch (error) {
+      setAddressError(error.message || 'Unable to save address.');
+    } finally {
+      setIsSavingAddress(false);
+    }
+  }
 
   if (!authReady) {
     return (
@@ -71,39 +135,142 @@ export default function Checkout() {
           </div>
         ) : (
           <div className="checkout-layout">
-            <div className="checkout-items">
-              {cartError && <p className="checkout-cart-error" role="alert">{cartError}</p>}
-              {items.map((item) => (
-
-                <div key={item._id} className="checkout-item">
-                  <img src={item.images?.[0] || 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg'} alt={item.name} />
-                  <div className="checkout-item__details">
-                    <p className="checkout-item__category">{item.category}</p>
-                    <h2>{item.name}</h2>
-                    <div className="checkout-quantity" aria-label={`Quantity for ${item.name}`}>
-                      <button
-                        type="button"
-                        className="checkout-quantity__button"
-                        aria-label={item.quantity === 1 ? `Remove ${item.name} from cart` : `Decrease quantity of ${item.name}`}
-                        onClick={() => decrementCartQuantity(item)}
+            <div className="checkout-main">
+              <section className="checkout-address" aria-labelledby="checkout-address-title">
+                <h2 id="checkout-address-title">Delivery address</h2>
+                {addresses.length > 0 ? (
+                  <>
+                    <label className="veloce-profile-field" htmlFor="checkout-address-select">
+                      <span>Choose a saved address</span>
+                      <select
+                        id="checkout-address-select"
+                        value={selectedAddress ? String(selectedAddress._id) : ''}
+                        onChange={(event) => setSelectedAddressId(event.target.value)}
                       >
-                        −
-                      </button>
-                      <span className="checkout-quantity__value" aria-live="polite">{item.quantity}</span>
-                      <button
-                        type="button"
-                        className="checkout-quantity__button"
-                        aria-label={`Increase quantity of ${item.name}`}
-                        disabled={Number(item.quantity) >= Number(item.stock ?? 0)}
-                        onClick={() => addToCart(item)}
-                      >
-                        +
-                      </button>
+                        {addresses.map((address) => (
+                          <option key={address._id} value={String(address._id)}>
+                            {address.label || 'Address'}{address.isDefault ? ' (Default)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {selectedAddress && (
+                      <div className="checkout-address__details">
+                        <strong>{selectedAddress.fullName}</strong>
+                        <p>{selectedAddress.phone}</p>
+                        <p>{selectedAddress.addressLine1}</p>
+                        {selectedAddress.addressLine2 && <p>{selectedAddress.addressLine2}</p>}
+                        <p>
+                          {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
+                        </p>
+                        <p>{selectedAddress.country}</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="checkout-address__empty">Add an address to continue with delivery.</p>
+                )}
+                <button
+                  type="button"
+                  className="checkout-address__toggle"
+                  onClick={() => {
+                    setAddressError('');
+                    setIsAddingAddress((current) => !current);
+                  }}
+                >
+                  {isAddingAddress ? 'Cancel' : 'Add a new address'}
+                </button>
+                {isAddingAddress && (
+                  <form className="checkout-address__form" onSubmit={handleAddressSubmit}>
+                    <div className="veloce-profile-field">
+                      <label htmlFor="checkout-address-label">Label</label>
+                      <input id="checkout-address-label" name="label" value={addressForm.label} onChange={handleAddressChange} />
                     </div>
+                    <div className="veloce-profile-field">
+                      <label htmlFor="checkout-address-fullName">Full name</label>
+                      <input id="checkout-address-fullName" name="fullName" autoComplete="name" value={addressForm.fullName} onChange={handleAddressChange} required />
+                    </div>
+                    <div className="veloce-profile-field">
+                      <label htmlFor="checkout-address-phone">Phone</label>
+                      <input id="checkout-address-phone" name="phone" type="tel" autoComplete="tel" value={addressForm.phone} onChange={handleAddressChange} required />
+                    </div>
+                    <div className="veloce-profile-field">
+                      <label htmlFor="checkout-address-line1">Address line 1</label>
+                      <input id="checkout-address-line1" name="addressLine1" autoComplete="address-line1" value={addressForm.addressLine1} onChange={handleAddressChange} required />
+                    </div>
+                    <div className="veloce-profile-field">
+                      <label htmlFor="checkout-address-line2">Address line 2</label>
+                      <input id="checkout-address-line2" name="addressLine2" autoComplete="address-line2" value={addressForm.addressLine2} onChange={handleAddressChange} />
+                    </div>
+                    <div className="veloce-profile-field-row">
+                      <div className="veloce-profile-field">
+                        <label htmlFor="checkout-address-city">City</label>
+                        <input id="checkout-address-city" name="city" autoComplete="address-level2" value={addressForm.city} onChange={handleAddressChange} required />
+                      </div>
+                      <div className="veloce-profile-field">
+                        <label htmlFor="checkout-address-state">State / region</label>
+                        <input id="checkout-address-state" name="state" autoComplete="address-level1" value={addressForm.state} onChange={handleAddressChange} required />
+                      </div>
+                    </div>
+                    <div className="veloce-profile-field-row">
+                      <div className="veloce-profile-field">
+                        <label htmlFor="checkout-address-postalCode">Postal code</label>
+                        <input id="checkout-address-postalCode" name="postalCode" autoComplete="postal-code" value={addressForm.postalCode} onChange={handleAddressChange} required />
+                      </div>
+                      <div className="veloce-profile-field">
+                        <label htmlFor="checkout-address-country">Country</label>
+                        <input id="checkout-address-country" name="country" autoComplete="country-name" value={addressForm.country} onChange={handleAddressChange} required />
+                      </div>
+                    </div>
+                    <label className="veloce-address-default-toggle">
+                      <input
+                        type="checkbox"
+                        name="isDefault"
+                        checked={addressForm.isDefault}
+                        onChange={handleAddressChange}
+                      />
+                      Set as default address
+                    </label>
+                    {addressError && <p className="veloce-address-error" role="alert">{addressError}</p>}
+                    <button type="submit" className="veloce-auth-submit" disabled={isSavingAddress}>
+                      {isSavingAddress ? 'Saving...' : 'Save address'}
+                    </button>
+                  </form>
+                )}
+              </section>
+              <div className="checkout-items">
+                {cartError && <p className="checkout-cart-error" role="alert">{cartError}</p>}
+                {items.map((item) => (
+                  <div key={item._id} className="checkout-item">
+                    <img src={item.images?.[0] || 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg'} alt={item.name} />
+                    <div className="checkout-item__details">
+                      <p className="checkout-item__category">{item.category}</p>
+                      <h2>{item.name}</h2>
+                      <div className="checkout-quantity" aria-label={`Quantity for ${item.name}`}>
+                        <button
+                          type="button"
+                          className="checkout-quantity__button"
+                          aria-label={item.quantity === 1 ? `Remove ${item.name} from cart` : `Decrease quantity of ${item.name}`}
+                          onClick={() => decrementCartQuantity(item)}
+                        >
+                          −
+                        </button>
+                        <span className="checkout-quantity__value" aria-live="polite">{item.quantity}</span>
+                        <button
+                          type="button"
+                          className="checkout-quantity__button"
+                          aria-label={`Increase quantity of ${item.name}`}
+                          disabled={Number(item.quantity) >= Number(item.stock ?? 0)}
+                          onClick={() => addToCart(item)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <strong>${Number(item.lineTotal).toFixed(2)}</strong>
                   </div>
-                  <strong>${Number(item.lineTotal).toFixed(2)}</strong>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <aside className="checkout-summary">
