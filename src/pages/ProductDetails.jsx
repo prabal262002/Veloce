@@ -3,16 +3,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import useShop from '../context/useShop';
 
 const FALLBACK_IMAGE = 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg';
-const API_URL = import.meta.env.VITE_API_URL
-  || (import.meta.env.DEV ? 'http://localhost:5001' : 'https://veloce-be-nine.vercel.app');
+const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.app';
 const REVIEWS_PER_PAGE = 10;
 
 async function readReviewResponse(response) {
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
-    throw new Error(
-      'The reviews API is unavailable. Run the local backend or deploy the backend review routes.',
-    );
+    throw new Error('Reviews are temporarily unavailable. Please try again later.');
   }
   return response.json();
 }

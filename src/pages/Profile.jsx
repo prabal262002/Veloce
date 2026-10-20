@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useShop from '../context/useShop';
 
-const API_URL = import.meta.env.VITE_API_URL
-  || (import.meta.env.DEV ? 'http://localhost:5001' : 'https://veloce-be-nine.vercel.app');
+const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.app';
 
 const defaultAddressForm = {
   label: 'Home',
