@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import useShop from "../context/useShop";
 
 const defaultAddressForm = {
@@ -89,6 +90,15 @@ export default function Checkout() {
     }
   }
 
+  function notify() {
+    if (!selectedAddress) {
+      toast.error("Please add or select a delivery address first.");
+      return;
+    }
+
+    toast.success("Order placed successfully!");
+  }
+
   if (!authReady) {
     return (
       <div className="checkout-page">
@@ -125,6 +135,7 @@ export default function Checkout() {
       </div>
     );
   }
+
 
   return (
     <div className="checkout-page">
