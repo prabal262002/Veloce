@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useShop from '../context/useShop';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const emptyForm = {
   name: '',
@@ -8,8 +8,37 @@ const emptyForm = {
   password: '',
 };
 
+function ProductSearch({ initialQuery }) {
+  const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState(initialQuery);
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    const query = searchInput.trim();
+    navigate({
+      pathname: '/',
+      search: query ? `?q=${encodeURIComponent(query)}` : '',
+    });
+  }
+
+  return (
+    <form className="d-flex flex-grow-1 veloce-search" role="search" onSubmit={handleSubmit}>
+      <input
+        className="form-control"
+        type="search"
+        placeholder="SEARCH PERFORMANCE PARTS & GEAR"
+        aria-label="Search performance parts and gear"
+        value={searchInput}
+        onChange={(event) => setSearchInput(event.target.value)}
+      />
+      <button className="veloce-search__button" type="submit">Search</button>
+    </form>
+  );
+}
+
 export default function Header() {
-  const { wishlist, cart, isLoggedIn, user, signup, login, logout } = useShop();
+  const { wishlist, cart, isLoggedIn, signup, login, logout } = useShop();
+  const location = useLocation();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [authMode, setAuthMode] = useState('signup');
@@ -67,14 +96,10 @@ export default function Header() {
               <small>RIDE FASTER</small>
             </a>
 
-            <form className="d-flex flex-grow-1 veloce-search" role="search">
-              <input
-                className="form-control"
-                type="search"
-                placeholder="SEARCH PERFORMANCE PARTS & GEAR"
-                aria-label="Search performance parts and gear"
-              />
-            </form>
+            <ProductSearch
+              key={location.search}
+              initialQuery={new URLSearchParams(location.search).get('q') || ''}
+            />
 
             <div className="d-flex align-items-center gap-4 text-nowrap veloce-actions">
               <Link to="/wishlist">

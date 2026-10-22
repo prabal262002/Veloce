@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import useShop from '../context/useShop';
 import RangeSliderModule from 'react-range-slider-input';
 import 'react-range-slider-input/dist/style.css';
@@ -9,6 +9,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.a
 
 export default function Home() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchTerm = (searchParams.get('q') || '').trim();
   const {
     products,
     loading,
@@ -92,6 +94,16 @@ export default function Home() {
 
   const filteredProducts = products.filter((product) => {
     const price = Number(product.price ?? 0);
+    const searchableText = [
+      product.name,
+      product.description,
+      product.brand,
+      product.category,
+      product.slug,
+      ...(Array.isArray(product.compatibleBikes) ? product.compatibleBikes : []),
+      ...Object.values(product.specifications || {}),
+    ].filter(Boolean).join(' ').toLocaleLowerCase();
+    const matchesSearch = !searchTerm || searchableText.includes(searchTerm.toLocaleLowerCase());
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
     const matchesAvailability = !inStockOnly || Number(product.stock ?? 0) > 0;
     const matchesPrice = price >= activePriceRange[0] && price <= activePriceRange[1];
@@ -99,7 +111,7 @@ export default function Home() {
     const rating = ratingSummary?.averageRating ?? 0;
     const reviewCount = ratingSummary?.reviewCount ?? 0;
     const matchesRating = minimumRating === 0 || (reviewCount > 0 && rating >= minimumRating);
-    return matchesCategory && matchesAvailability && matchesPrice && matchesRating;
+    return matchesSearch && matchesCategory && matchesAvailability && matchesPrice && matchesRating;
   });
   if (sortOrder === 'price-asc') {
     filteredProducts.sort((first, second) => Number(first.price ?? 0) - Number(second.price ?? 0));
@@ -166,9 +178,11 @@ export default function Home() {
         <div className="featured-products__heading">
           <div>
             <p className="featured-products__eyebrow">VELOCE / RIDER EQUIPMENT</p>
-            <h1 id="featured-title">Gear up. Get out.</h1>
+            <h1 id="featured-title">{searchTerm ? 'Search results' : 'Gear up. Get out.'}</h1>
             <p className="featured-products__intro">
-              Road-ready essentials for every mile ahead.
+              {searchTerm
+                ? <>Showing results for <strong>{searchTerm}</strong>.</>
+                : 'Road-ready essentials for every mile ahead.'}
             </p> 
           </div>
           <span className="featured-products__count">GEAR / {String(filteredProducts.length).padStart(2, '0')}</span>
@@ -347,8 +361,10 @@ export default function Home() {
               </div>
             ) : (
               <div className="catalog-empty">
-                <h2>No gear matches these filters</h2>
-                <p>Try another category or clear your filters.</p>
+                <h2>{searchTerm ? 'No products found' : 'No gear matches these filters'}</h2>
+                <p>{searchTerm
+                  ? `No products matched “${searchTerm}”. Try a different search or adjust your filters.`
+                  : 'Try another category or clear your filters.'}</p>
                 <button type="button" className="product-card__button product-card__button--ghost" onClick={clearFilters}>Clear filters</button>
               </div>
             )}
