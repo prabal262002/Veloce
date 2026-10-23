@@ -154,6 +154,51 @@ body {
   font-weight: 400;
 }
 
+.veloce-actions a.veloce-icon-link {
+  position: relative;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  color: var(--text-h) !important;
+}
+
+.veloce-icon-link__icon {
+  display: block;
+  width: 1.45rem;
+  height: 1.45rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.veloce-actions a.veloce-icon-link:hover .veloce-icon-link__icon,
+.veloce-actions a.veloce-icon-link:focus-visible .veloce-icon-link__icon {
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.veloce-icon-link__count {
+  position: absolute;
+  top: -0.05rem;
+  right: -0.15rem;
+  display: grid;
+  min-width: 1rem;
+  height: 1rem;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0 0.2rem;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .veloce-auth-button,
 .veloce-profile-button,
 .veloce-auth-submit {

@@ -102,11 +102,29 @@ export default function Header() {
             />
 
             <div className="d-flex align-items-center gap-4 text-nowrap veloce-actions">
-              <Link to="/wishlist">
-                <span aria-hidden="true">♡</span> WISHLIST <b>{wishlist.length}</b>
+              <Link
+                className="veloce-icon-link"
+                to="/wishlist"
+                aria-label={`Wishlist, ${wishlist.length} ${wishlist.length === 1 ? 'item' : 'items'}`}
+                title="Wishlist"
+              >
+                <svg className="veloce-icon-link__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
+                </svg>
+                <sup className="veloce-icon-link__count">{wishlist.length}</sup>
               </Link>
-              <Link to="/checkout" aria-label={`Cart, ${cartCount} items`}>
-                <span aria-hidden="true">▱</span> CART <b>{cartCount}</b>
+              <Link
+                className="veloce-icon-link"
+                to="/checkout"
+                aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}
+                title="Cart"
+              >
+                <svg className="veloce-icon-link__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.5L22 8H6" />
+                  <circle cx="10" cy="20" r="1" />
+                  <circle cx="18" cy="20" r="1" />
+                </svg>
+                <sup className="veloce-icon-link__count">{cartCount}</sup>
               </Link>
 
               {isLoggedIn ? (
@@ -122,12 +140,13 @@ export default function Header() {
 
                   {isProfileOpen && (
                     <div className="veloce-profile-menu">
-                      <Link className="veloce-profile-menu__item" to="/profile" onClick={() => setIsProfileOpen(false)}>
-                        My Profile
-                      </Link>
                       <Link className="veloce-profile-menu__item" to="/orders" onClick={() => setIsProfileOpen(false)}>
                         My Orders
                       </Link>
+                      <Link className="veloce-profile-menu__item" to="/profile" onClick={() => setIsProfileOpen(false)}>
+                        My Profile
+                      </Link>
+                      
                       <button
                         type="button"
                         className="veloce-profile-menu__item veloce-profile-menu__item--button"
