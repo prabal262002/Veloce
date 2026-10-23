@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
+import { Link, useNavigate } from "react-router-dom";
 import useShop from "../context/useShop";
 
 const defaultAddressForm = {
@@ -17,6 +16,7 @@ const defaultAddressForm = {
 };
 
 export default function Checkout() {
+  const navigate = useNavigate();
   const {
     cart,
     products,
@@ -27,12 +27,18 @@ export default function Checkout() {
     cartError,
     user,
     addAddress,
+    createOrder,
   } = useShop();
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState("");
   const [addressForm, setAddressForm] = useState(defaultAddressForm);
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState("");
+  const [promoMessage, setPromoMessage] = useState("");
+  const [orderError, setOrderError] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const items = cart
     .map((item) => {
@@ -53,6 +59,10 @@ export default function Checkout() {
     (sum, item) => sum + Number(item.lineTotal || 0),
     0,
   );
+  const discount = appliedPromoCode === "VELOCE10"
+    ? Math.round(subtotal * 10) / 100
+    : 0;
+  const total = Math.max(0, subtotal - discount);
   const addresses = user?.addresses || [];
   const selectedAddress =
     addresses.find((address) => String(address._id) === selectedAddressId) ||
@@ -90,13 +100,44 @@ export default function Checkout() {
     }
   }
 
-  function notify() {
-    if (!selectedAddress) {
-      toast.error("Please add or select a delivery address first.");
+  function applyPromoCode() {
+    const normalizedCode = promoInput.trim().toUpperCase();
+    if (!normalizedCode) {
+      setAppliedPromoCode("");
+      setPromoMessage("");
       return;
     }
 
-    toast.success("Order placed successfully!");
+    if (normalizedCode !== "VELOCE10") {
+      setAppliedPromoCode("");
+      setPromoMessage("That promo code is not valid.");
+      return;
+    }
+
+    setAppliedPromoCode(normalizedCode);
+    setPromoInput(normalizedCode);
+    setPromoMessage("VELOCE10 applied — you saved 10%.");
+  }
+
+  async function handlePlaceOrder() {
+    if (!selectedAddress) {
+      setOrderError("Please add or select a delivery address first.");
+      return;
+    }
+
+    setOrderError("");
+    setIsPlacingOrder(true);
+    try {
+      const order = await createOrder({
+        addressId: String(selectedAddress._id),
+        promoCode: appliedPromoCode,
+      });
+      navigate(`/orders/${order._id}`, { replace: true });
+    } catch (error) {
+      setOrderError(error.message || "Unable to place your order.");
+    } finally {
+      setIsPlacingOrder(false);
+    }
   }
 
   if (!authReady) {
@@ -431,24 +472,60 @@ export default function Checkout() {
 
             <aside className="checkout-summary">
               <h2>Order summary</h2>
+              <div className="checkout-promo">
+                <label htmlFor="checkout-promo-code">Promo code</label>
+                <div className="checkout-promo__control">
+                  <input
+                    id="checkout-promo-code"
+                    type="text"
+                    value={promoInput}
+                    onChange={(event) => {
+                      setPromoInput(event.target.value);
+                      if (appliedPromoCode) {
+                        setAppliedPromoCode("");
+                        setPromoMessage("");
+                      }
+                    }}
+                    placeholder="Enter code"
+                    autoComplete="off"
+                  />
+                  <button type="button" onClick={applyPromoCode}>
+                    {appliedPromoCode ? "Applied" : "Apply"}
+                  </button>
+                </div>
+                <p className={appliedPromoCode ? "is-success" : ""} role="status">
+                  {promoMessage || "Use VELOCE10 for 10% off your items."}
+                </p>
+              </div>
               <div className="checkout-summary__row">
                 <span>Subtotal</span>
                 <strong>${subtotal.toFixed(2)}</strong>
               </div>
+              {discount > 0 && (
+                <div className="checkout-summary__row checkout-summary__row--discount">
+                  <span>Discount ({appliedPromoCode})</span>
+                  <strong>−${discount.toFixed(2)}</strong>
+                </div>
+              )}
               <div className="checkout-summary__row">
                 <span>Shipping</span>
                 <strong>Free</strong>
               </div>
               <div className="checkout-summary__row checkout-summary__row--total">
                 <span>Total</span>
-                <strong>${subtotal.toFixed(2)}</strong>
+                <strong>${total.toFixed(2)}</strong>
               </div>
+              <p className="checkout-payment-note">Payment method: Cash on delivery</p>
+              {orderError && (
+                <p className="checkout-cart-error" role="alert">{orderError}</p>
+              )}
               <button
                 type="button"
-                onClick={notify}
+                onClick={handlePlaceOrder}
+                disabled={isPlacingOrder || Boolean(cartError)}
                 className="product-card__button product-card__button--primary checkout-summary__button"
               >
-                Place order
+                {isPlacingOrder ? "Placing order..." : "Place order"}
               </button>
             </aside>
           </div>

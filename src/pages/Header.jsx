@@ -117,13 +117,16 @@ export default function Header() {
                     aria-label="Open profile menu"
                     onClick={() => setIsProfileOpen((current) => !current)}
                   >
-                    <span aria-hidden="true">◉</span>
+                    <img src="/user-avatar.svg" alt="" aria-hidden="true" />
                   </button>
 
                   {isProfileOpen && (
                     <div className="veloce-profile-menu">
                       <Link className="veloce-profile-menu__item" to="/profile" onClick={() => setIsProfileOpen(false)}>
                         My Profile
+                      </Link>
+                      <Link className="veloce-profile-menu__item" to="/orders" onClick={() => setIsProfileOpen(false)}>
+                        My Orders
                       </Link>
                       <button
                         type="button"

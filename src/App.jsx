@@ -5,6 +5,8 @@ import ProductDetails from './pages/ProductDetails.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Wishlist from './pages/Wishlist.jsx'
 import Profile from './pages/Profile.jsx'
+import Orders from './pages/Orders.jsx'
+import OrderConfirmation from './pages/OrderConfirmation.jsx'
 import {Routes, Route} from "react-router-dom";
 import ShopProvider from './context/ShopContext.jsx'
 import { ToastContainer } from 'react-toastify';
@@ -23,6 +25,8 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:orderId" element={<OrderConfirmation />} />
         </Routes>
       </main>
 

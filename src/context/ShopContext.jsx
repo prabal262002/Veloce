@@ -132,6 +132,57 @@ export default function ShopProvider({ children }) {
     return result;
   }
 
+  async function createOrder({ addressId, promoCode }) {
+    await cartWriteQueue.current;
+    await sendCart(cartRef.current);
+
+    const response = await fetch(`${API_URL}/orders`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addressId, promoCode }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to place your order.');
+    }
+
+    cartRef.current = [];
+    setCart([]);
+    setCartError('');
+    setUser((currentUser) => currentUser
+      ? { ...currentUser, cart: [] }
+      : currentUser);
+    return result.order;
+  }
+
+  async function getOrder(orderId) {
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      credentials: 'include',
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to fetch this order.');
+    }
+
+    return result.order;
+  }
+
+  async function getOrders() {
+    const response = await fetch(`${API_URL}/orders`, {
+      credentials: 'include',
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to fetch your orders.');
+    }
+
+    return result.orders;
+  }
+
   function persistCart(nextCart) {
     cartWriteQueue.current = cartWriteQueue.current
       .catch(() => {})
@@ -267,6 +318,9 @@ export default function ShopProvider({ children }) {
     logout,
     refreshUser,
     addAddress,
+    createOrder,
+    getOrder,
+    getOrders,
     addToCart,
     decrementCartQuantity,
     toggleWishlist,
