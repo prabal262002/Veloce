@@ -5,7 +5,9 @@ import RangeSliderModule from 'react-range-slider-input';
 import 'react-range-slider-input/dist/style.css';
 
 const RangeSlider = RangeSliderModule.default;
-const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.app';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
+  ? '/api'
+  : 'https://veloce-be-nine.vercel.app');
 
 export default function Home() {
   const navigate = useNavigate();

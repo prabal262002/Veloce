@@ -4,7 +4,7 @@
 
 Authentication uses an HttpOnly session cookie; the frontend does not store auth or cart data in browser storage. Signed-in carts are saved on the user document in MongoDB and restored through the backend. Guest carts and wishlists exist only in memory and are cleared on refresh.
 
-The frontend uses `https://veloce-be-nine.vercel.app` for the API by default in both development and production. Set `VITE_API_URL` at build time to use a different backend. Configure the backend's `FRONTEND_ORIGIN` to the exact frontend origin and set `JWT_SECRET` for signed sessions. Vercel deployments use secure, cross-site session cookies and require HTTPS. After changing the backend cookie configuration, redeploy the backend and sign in again so the browser receives a fresh session cookie.
+In development, the frontend uses `https://veloce-be-nine.vercel.app` for the API by default. In production builds, it uses the same-origin `/api` proxy configured in `vercel.json`; this keeps the session cookie on the frontend's domain and avoids browser restrictions on third-party cookies. Set `VITE_API_URL` to `/api` in the Vercel project if that variable is already configured, or remove it to use the production default. Configure the backend's `FRONTEND_ORIGIN` to the exact frontend origin and set `JWT_SECRET` for signed sessions. After deployment, sign in again so the browser receives a fresh session cookie.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

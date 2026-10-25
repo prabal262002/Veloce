@@ -3,7 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import useShop from '../context/useShop';
 
 const FALLBACK_IMAGE = 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg';
-const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.app';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
+  ? '/api'
+  : 'https://veloce-be-nine.vercel.app');
 const REVIEWS_PER_PAGE = 10;
 
 async function readReviewResponse(response) {
