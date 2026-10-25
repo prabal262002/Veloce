@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useShop from '../context/useShop';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://veloce-be-nine.vercel.app';
-
 const defaultAddressForm = {
   label: 'Home',
   fullName: '',
@@ -18,7 +16,7 @@ const defaultAddressForm = {
 };
 
 export default function Profile() {
-  const { user, isLoggedIn, logout, refreshUser, addAddress } = useShop();
+  const { user, isLoggedIn, logout, addAddress, deleteAddress } = useShop();
   const [addressForm, setAddressForm] = useState(defaultAddressForm);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState('');
@@ -62,17 +60,7 @@ export default function Profile() {
 
   const handleDeleteAddress = async (addressId) => {
     try {
-      const response = await fetch(`${API_URL}/addresses/${addressId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Unable to delete the address.');
-      }
-
-      await refreshUser();
+      await deleteAddress(addressId);
     } catch (error) {
       setAddressError(error.message || 'Unable to delete the address.');
     }

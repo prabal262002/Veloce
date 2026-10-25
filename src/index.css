@@ -1496,6 +1496,28 @@ h1 {
   color: var(--text-h);
 }
 
+.checkout-address__selected {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.checkout-address__selected .checkout-address__details {
+  min-width: 0;
+}
+
+.checkout-address__selected .veloce-address-delete {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.veloce-address-delete:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .checkout-address__details p {
   margin: 0.2rem 0 0;
   color: var(--text);
@@ -2402,6 +2424,10 @@ h1 {
 @media (max-width: 560px) {
   .checkout-address .veloce-profile-field-row {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-address__selected {
+    flex-direction: column;
   }
 
   .cart-feedback {

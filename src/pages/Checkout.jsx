@@ -27,12 +27,14 @@ export default function Checkout() {
     cartError,
     user,
     addAddress,
+    deleteAddress,
     createOrder,
   } = useShop();
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState("");
+  const [deletingAddressId, setDeletingAddressId] = useState("");
   const [addressForm, setAddressForm] = useState(defaultAddressForm);
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState("");
@@ -97,6 +99,26 @@ export default function Checkout() {
       setAddressError(error.message || "Unable to save address.");
     } finally {
       setIsSavingAddress(false);
+    }
+  }
+
+  async function handleAddressDelete() {
+    if (!selectedAddress || !window.confirm(`Remove the ${selectedAddress.label || "selected"} address?`)) {
+      return;
+    }
+
+    const removedAddressId = String(selectedAddress._id);
+    setAddressError("");
+    setDeletingAddressId(removedAddressId);
+    try {
+      const remainingAddresses = await deleteAddress(removedAddressId);
+      const nextAddress = remainingAddresses.find((address) => address.isDefault)
+        || remainingAddresses[0];
+      setSelectedAddressId(nextAddress ? String(nextAddress._id) : "");
+    } catch (error) {
+      setAddressError(error.message || "Unable to remove address.");
+    } finally {
+      setDeletingAddressId("");
     }
   }
 
@@ -234,18 +256,28 @@ export default function Checkout() {
                       </select>
                     </label>
                     {selectedAddress && (
-                      <div className="checkout-address__details">
-                        <strong>{selectedAddress.fullName}</strong>
-                        <p>{selectedAddress.phone}</p>
-                        <p>{selectedAddress.addressLine1}</p>
-                        {selectedAddress.addressLine2 && (
-                          <p>{selectedAddress.addressLine2}</p>
-                        )}
-                        <p>
-                          {selectedAddress.city}, {selectedAddress.state}{" "}
-                          {selectedAddress.postalCode}
-                        </p>
-                        <p>{selectedAddress.country}</p>
+                      <div className="checkout-address__selected">
+                        <div className="checkout-address__details">
+                          <strong>{selectedAddress.fullName}</strong>
+                          <p>{selectedAddress.phone}</p>
+                          <p>{selectedAddress.addressLine1}</p>
+                          {selectedAddress.addressLine2 && (
+                            <p>{selectedAddress.addressLine2}</p>
+                          )}
+                          <p>
+                            {selectedAddress.city}, {selectedAddress.state}{" "}
+                            {selectedAddress.postalCode}
+                          </p>
+                          <p>{selectedAddress.country}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="veloce-address-delete"
+                          onClick={handleAddressDelete}
+                          disabled={deletingAddressId === String(selectedAddress._id)}
+                        >
+                          {deletingAddressId === String(selectedAddress._id) ? "Removing..." : "Remove address"}
+                        </button>
                       </div>
                     )}
                   </>
@@ -264,6 +296,9 @@ export default function Checkout() {
                 >
                   {isAddingAddress ? "Cancel" : "Add a new address"}
                 </button>
+                {addressError && (
+                  <p className="veloce-address-error" role="alert">{addressError}</p>
+                )}
                 {isAddingAddress && (
                   <form
                     className="checkout-address__form"

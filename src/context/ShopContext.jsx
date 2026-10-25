@@ -132,6 +132,23 @@ export default function ShopProvider({ children }) {
     return result;
   }
 
+  async function deleteAddress(addressId) {
+    const response = await fetch(`${API_URL}/addresses/${addressId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to remove address.');
+    }
+
+    setUser((currentUser) => currentUser
+      ? { ...currentUser, addresses: result.addresses }
+      : currentUser);
+    return result.addresses;
+  }
+
   async function createOrder({ addressId, promoCode }) {
     await cartWriteQueue.current;
     await sendCart(cartRef.current);
@@ -318,6 +335,7 @@ export default function ShopProvider({ children }) {
     logout,
     refreshUser,
     addAddress,
+    deleteAddress,
     createOrder,
     getOrder,
     getOrders,
