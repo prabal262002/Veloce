@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useShop from '../context/useShop';
+import { formatProductCategory } from '../utils/productCategories';
 import RangeSliderModule from 'react-range-slider-input';
 import 'react-range-slider-input/dist/style.css';
 
@@ -205,7 +206,7 @@ export default function Home() {
                     checked={selectedCategories.includes(category)}
                     onChange={() => toggleCategory(category)}
                   />
-                  <span>{category}</span>
+                  <span>{formatProductCategory(category)}</span>
                 </label>
               ))}
             </fieldset>
@@ -311,7 +312,7 @@ export default function Home() {
                 </button>
               </div>
               <div className="product-card__details">
-                <p className="product-card__category">{product.category}</p>
+                <p className="product-card__category">{formatProductCategory(product.category)}</p>
                 <div className="product-card__title-row">
                   <h2>{product.name}</h2>
                   <span className="product-card__price">${Number(product.price).toFixed(2)}</span>

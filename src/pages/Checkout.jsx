@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useShop from "../context/useShop";
+import { formatProductCategory } from "../utils/productCategories";
 
 const defaultAddressForm = {
   label: "Home",
@@ -462,7 +463,7 @@ export default function Checkout() {
                       alt={item.name}
                     />
                     <div className="checkout-item__details">
-                      <p className="checkout-item__category">{item.category}</p>
+                      <p className="checkout-item__category">{formatProductCategory(item.category)}</p>
                       <h2>{item.name}</h2>
                       <div
                         className="checkout-quantity"

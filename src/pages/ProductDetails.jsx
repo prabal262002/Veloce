@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import useShop from '../context/useShop';
+import { formatProductCategory } from '../utils/productCategories';
 
 const FALLBACK_IMAGE = 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg';
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
@@ -248,7 +249,7 @@ export default function ProductDetails() {
 
         <div className="product-details__content">
           <div className="product-details__title-wrap">
-            <p className="product-details__eyebrow">{product.category}</p>
+            <p className="product-details__eyebrow">{formatProductCategory(product.category)}</p>
             <div className="product-details__title-row">
               <h1>{product.name}</h1>
               <button

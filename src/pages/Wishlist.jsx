@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import useShop from '../context/useShop';
+import { formatProductCategory } from '../utils/productCategories';
 
 const FALLBACK_IMAGE = 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg';
 
@@ -60,7 +61,7 @@ export default function Wishlist() {
                     <img src={product.images?.[0] || FALLBACK_IMAGE} alt={product.name} />
                   </button>
                   <div className="wishlist-item__details">
-                    <p className="product-card__category">{product.category}</p>
+                    <p className="product-card__category">{formatProductCategory(product.category)}</p>
                     <button type="button" className="wishlist-item__name" onClick={() => navigate(`/product/${productId}`)}>
                       {product.name}
                     </button>

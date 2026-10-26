@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import useShop from "../context/useShop";
+import { formatProductCategory } from "../utils/productCategories";
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
   ? "/api"
@@ -86,7 +87,7 @@ export default function OrderConfirmation() {
               <div className="checkout-item" key={String(item.productId)}>
                 {item.image && <img src={item.image} alt="" />}
                 <div className="checkout-item__details">
-                  <p className="checkout-item__category">{item.category}</p>
+                  <p className="checkout-item__category">{formatProductCategory(item.category)}</p>
                   <h2>{item.name}</h2>
                   <p>Quantity: {item.quantity} × {formatPrice(item.unitPrice)}</p>
                 </div>
