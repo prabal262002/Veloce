@@ -6,6 +6,8 @@ Authentication uses an HttpOnly session cookie; the frontend does not store auth
 
 In development, the frontend uses `https://veloce-be-nine.vercel.app` for the API by default. In production builds, it uses the same-origin `/api` proxy configured in `vercel.json`; this keeps the session cookie on the frontend's domain and avoids browser restrictions on third-party cookies. Set `VITE_API_URL` to `/api` in the Vercel project if that variable is already configured, or remove it to use the production default. Configure the backend's `FRONTEND_ORIGIN` to the exact frontend origin and set `JWT_SECRET` for signed sessions. After deployment, sign in again so the browser receives a fresh session cookie.
 
+Google sign-in uses Google Identity Services. Set `VITE_GOOGLE_CLIENT_ID` in the frontend build environment and the matching `GOOGLE_CLIENT_ID` on the backend. The Google OAuth client must allow the local and deployed frontend origins. Redeploy both apps after setting the variables.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

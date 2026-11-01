@@ -1,12 +1,94 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useShop from '../context/useShop';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+let googleIdentityScriptPromise;
 
 const emptyForm = {
   name: '',
   email: '',
   password: '',
 };
+
+function loadGoogleIdentityScript() {
+  if (window.google?.accounts?.id) {
+    return Promise.resolve();
+  }
+
+  if (!googleIdentityScriptPromise) {
+    googleIdentityScriptPromise = new Promise((resolve, reject) => {
+      const existingScript = document.querySelector('script[data-google-identity]');
+      if (existingScript) {
+        existingScript.addEventListener('load', resolve, { once: true });
+        existingScript.addEventListener('error', reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.dataset.googleIdentity = 'true';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    }).catch((error) => {
+      googleIdentityScriptPromise = null;
+      throw error;
+    });
+  }
+
+  return googleIdentityScriptPromise;
+}
+
+function GoogleSignInButton({ onCredential, onError }) {
+  const buttonRef = useRef(null);
+  const callbacksRef = useRef({ onCredential, onError });
+
+  useEffect(() => {
+    callbacksRef.current = { onCredential, onError };
+  }, [onCredential, onError]);
+
+  useEffect(() => {
+    let active = true;
+    loadGoogleIdentityScript()
+      .then(() => {
+        if (!active) return;
+
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response) => {
+            if (!response.credential) {
+              callbacksRef.current.onError('Google did not return a sign-in credential.');
+              return;
+            }
+            callbacksRef.current.onCredential(response.credential);
+          },
+        });
+        if (buttonRef.current) {
+          window.google.accounts.id.renderButton(buttonRef.current, {
+            theme: 'filled_black',
+            size: 'large',
+            shape: 'rectangular',
+            text: 'continue_with',
+            width: 360,
+          });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          callbacksRef.current.onError('Unable to load Google sign-in. Please try again.');
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return <div className="veloce-google-signin" ref={buttonRef} />;
+}
 
 function ProductSearch({ initialQuery }) {
   const navigate = useNavigate();
@@ -37,7 +119,7 @@ function ProductSearch({ initialQuery }) {
 }
 
 export default function Header() {
-  const { wishlist, cart, isLoggedIn, signup, login, logout } = useShop();
+  const { wishlist, cart, isLoggedIn, signup, login, googleSignIn, logout } = useShop();
   const location = useLocation();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -75,6 +157,18 @@ export default function Header() {
       setIsProfileOpen(false);
     } catch (error) {
       setAuthError(error.message || 'Authentication failed.');
+    }
+  }
+
+  async function handleGoogleCredential(credential) {
+    setAuthError('');
+    try {
+      await googleSignIn(credential);
+      setAuthForm(emptyForm);
+      setIsAuthOpen(false);
+      setIsProfileOpen(false);
+    } catch (error) {
+      setAuthError(error.message || 'Google sign-in failed.');
     }
   }
 
@@ -191,6 +285,20 @@ export default function Header() {
             </div>
 
             <form onSubmit={handleAuthSubmit} className="veloce-auth-form">
+              {GOOGLE_CLIENT_ID ? (
+                <>
+                  <GoogleSignInButton
+                    onCredential={handleGoogleCredential}
+                    onError={setAuthError}
+                  />
+                  <div className="veloce-auth-divider"><span>or use email</span></div>
+                </>
+              ) : (
+                <p className="veloce-google-signin-note">
+                  Google sign-in is unavailable until VITE_GOOGLE_CLIENT_ID is configured.
+                </p>
+              )}
+
               {authMode === 'signup' && (
                 <div className="veloce-form-group">
                   <label>Full name</label>

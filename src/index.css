@@ -325,6 +325,38 @@ body {
   gap: 1rem;
 }
 
+.veloce-google-signin {
+  display: flex;
+  min-height: 40px;
+  justify-content: center;
+}
+
+.veloce-google-signin-note {
+  margin: 0;
+  color: #a8adb5;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.veloce-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #81858b;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.05rem;
+  text-transform: uppercase;
+}
+
+.veloce-auth-divider::before,
+.veloce-auth-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #36393b;
+}
+
 .veloce-form-group {
   display: grid;
   gap: 0.45rem;
