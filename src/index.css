@@ -492,6 +492,24 @@ body {
   gap: 1rem;
 }
 
+.veloce-address-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.veloce-address-update,
+.veloce-address-cancel {
+  border: 1px solid #59636b;
+  background: transparent;
+  color: var(--text-h);
+  padding: 0.3rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 .veloce-address-delete {
   border: 1px solid rgba(230, 57, 70, 0.4);
   background: transparent;
@@ -502,6 +520,10 @@ body {
   letter-spacing: 0.08rem;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.veloce-address-cancel {
+  margin-left: 0.6rem;
 }
 
 .veloce-address-item strong,
@@ -1614,6 +1636,33 @@ h1 {
 
 .checkout-item__details {
   min-width: 0;
+}
+
+.checkout-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+.checkout-item__action {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.checkout-item__action:hover {
+  color: var(--text-h);
+}
+
+.checkout-item__action--remove {
+  color: var(--accent);
 }
 
 .checkout-item__category {

@@ -21,8 +21,11 @@ export default function Checkout() {
   const {
     cart,
     products,
+    wishlist,
     addToCart,
     decrementCartQuantity,
+    removeFromCart,
+    toggleWishlist,
     authReady,
     isLoggedIn,
     cartError,
@@ -74,9 +77,14 @@ export default function Checkout() {
 
   function handleAddressChange(event) {
     const { name, value, type, checked } = event.target;
+    const digitLimit = { phone: 10, postalCode: 6 }[name];
+    const nextValue = digitLimit
+      ? value.replace(/\D/g, "").slice(0, digitLimit)
+      : value;
+
     setAddressForm((currentForm) => ({
       ...currentForm,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : nextValue,
     }));
   }
 
@@ -121,6 +129,13 @@ export default function Checkout() {
     } finally {
       setDeletingAddressId("");
     }
+  }
+
+  function moveToWishlist(product) {
+    if (!wishlist.includes(String(product._id))) {
+      toggleWishlist(product._id);
+    }
+    removeFromCart(product);
   }
 
   function applyPromoCode() {
@@ -332,8 +347,10 @@ export default function Checkout() {
                       <input
                         id="checkout-address-phone"
                         name="phone"
-                        type="number"
-                        pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={10}
+                        pattern="[0-9]{10}"
                         autoComplete="tel"
                         value={addressForm.phone}
                         onChange={handleAddressChange}
@@ -398,11 +415,11 @@ export default function Checkout() {
                         </label>
                         <input
                           id="checkout-address-postalCode"
-                          type="number"
-                          maxlength="6"
-                          minlength="6"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          pattern="[0-9]{6}"
                           name="postalCode"
-                          inputmode="numeric"
                           autoComplete="postal-code"
                           value={addressForm.postalCode}
                           onChange={handleAddressChange}
@@ -497,6 +514,22 @@ export default function Checkout() {
                           onClick={() => addToCart(item)}
                         >
                           +
+                        </button>
+                      </div>
+                      <div className="checkout-item__actions">
+                        <button
+                          type="button"
+                          className="checkout-item__action"
+                          onClick={() => moveToWishlist(item)}
+                        >
+                          Move to wishlist
+                        </button>
+                        <button
+                          type="button"
+                          className="checkout-item__action checkout-item__action--remove"
+                          onClick={() => removeFromCart(item)}
+                        >
+                          Remove
                         </button>
                       </div>
                     </div>

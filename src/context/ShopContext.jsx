@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import ShopContext from './shopContext';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
@@ -132,6 +133,25 @@ export default function ShopProvider({ children }) {
       ? { ...currentUser, addresses: result.addresses }
       : currentUser);
     return result;
+  }
+
+  async function updateAddress(addressId, address) {
+    const response = await fetch(`${API_URL}/addresses/${addressId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(address),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to update address.');
+    }
+
+    setUser((currentUser) => currentUser
+      ? { ...currentUser, addresses: result.addresses }
+      : currentUser);
+    return result.addresses;
   }
 
   async function deleteAddress(addressId) {
@@ -317,13 +337,32 @@ export default function ShopProvider({ children }) {
     changeCartQuantity(product, -1);
   }
 
+  function removeFromCart(product) {
+    const productId = getProductId(product);
+    const item = cartRef.current.find(
+      (cartItem) => String(cartItem.productId) === productId,
+    );
+    if (item) changeCartQuantity(product, -Number(item.quantity));
+  }
+
   function toggleWishlist(product) {
     const productId = getProductId(product);
+    const isInWishlist = wishlist.includes(productId);
+    const productName = products.find(
+      (item) => getProductId(item) === productId,
+    )?.name;
+
     setWishlist((currentWishlist) =>
       currentWishlist.includes(productId)
         ? currentWishlist.filter((id) => id !== productId)
         : [...currentWishlist, productId],
     );
+
+    if (isInWishlist) {
+      toast.info(`${productName || 'Item'} removed from wishlist.`);
+    } else {
+      toast.success(`${productName || 'Item'} added to wishlist.`);
+    }
   }
 
   const value = {
@@ -342,12 +381,14 @@ export default function ShopProvider({ children }) {
     logout,
     refreshUser,
     addAddress,
+    updateAddress,
     deleteAddress,
     createOrder,
     getOrder,
     getOrders,
     addToCart,
     decrementCartQuantity,
+    removeFromCart,
     toggleWishlist,
   };
 

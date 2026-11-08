@@ -16,16 +16,22 @@ const defaultAddressForm = {
 };
 
 export default function Profile() {
-  const { user, isLoggedIn, logout, addAddress, deleteAddress } = useShop();
+  const { user, isLoggedIn, logout, addAddress, updateAddress, deleteAddress } = useShop();
   const [addressForm, setAddressForm] = useState(defaultAddressForm);
+  const [editingAddressId, setEditingAddressId] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState('');
 
   const handleAddressChange = (event) => {
     const { name, value, type, checked } = event.target;
+    const digitLimit = { phone: 10, postalCode: 6 }[name];
+    const nextValue = digitLimit
+      ? value.replace(/\D/g, '').slice(0, digitLimit)
+      : value;
+
     setAddressForm((currentForm) => ({
       ...currentForm,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'checkbox' ? checked : nextValue,
     }));
   };
 
@@ -49,7 +55,12 @@ export default function Profile() {
         isDefault: user?.addresses?.length ? addressForm.isDefault : true,
       };
 
-      await addAddress(payload);
+      if (editingAddressId) {
+        await updateAddress(editingAddressId, payload);
+        setEditingAddressId('');
+      } else {
+        await addAddress(payload);
+      }
       setAddressForm(defaultAddressForm);
     } catch (error) {
       setAddressError(error.message || 'Unable to save address.');
@@ -64,6 +75,22 @@ export default function Profile() {
     } catch (error) {
       setAddressError(error.message || 'Unable to delete the address.');
     }
+  };
+
+  const handleEditAddress = (address) => {
+    setAddressError('');
+    setAddressForm({
+      ...defaultAddressForm,
+      ...address,
+      isDefault: Boolean(address.isDefault),
+    });
+    setEditingAddressId(String(address._id));
+  };
+
+  const handleCancelAddressEdit = () => {
+    setAddressError('');
+    setAddressForm(defaultAddressForm);
+    setEditingAddressId('');
   };
 
   if (!isLoggedIn || !user) {
@@ -114,13 +141,22 @@ export default function Profile() {
                 <div key={`${address._id || address.label || 'address'}-${index}`} className="veloce-address-item">
                   <div className="veloce-address-header">
                     <strong>{address.label || 'Address'}{address.isDefault ? ' • Default' : ''}</strong>
-                    <button
-                      type="button"
-                      className="veloce-address-delete"
-                      onClick={() => handleDeleteAddress(address._id)}
-                    >
-                      Remove
-                    </button>
+                    <div className="veloce-address-actions">
+                      <button
+                        type="button"
+                        className="veloce-address-update"
+                        onClick={() => handleEditAddress(address)}
+                      >
+                        Update
+                      </button>
+                      <button
+                        type="button"
+                        className="veloce-address-delete"
+                        onClick={() => handleDeleteAddress(address._id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                   <p>{address.fullName}</p>
                   <p>{address.addressLine1}</p>
@@ -136,7 +172,7 @@ export default function Profile() {
             )}
 
             <form className="veloce-address-form" onSubmit={handleAddressSubmit}>
-              <h3>Add a new address</h3>
+              <h3>{editingAddressId ? 'Update address' : 'Add a new address'}</h3>
               <div className="veloce-profile-field">
                 <label htmlFor="address-label">Label</label>
                 <input id="address-label" name="label" value={addressForm.label} onChange={handleAddressChange} />
@@ -147,7 +183,7 @@ export default function Profile() {
               </div>
               <div className="veloce-profile-field">
                 <label htmlFor="address-phone">Phone</label>
-                <input id="address-phone" name="phone" value={addressForm.phone} onChange={handleAddressChange} required />
+                <input id="address-phone" name="phone" type="tel" inputMode="numeric" maxLength={10} pattern="[0-9]{10}" autoComplete="tel" value={addressForm.phone} onChange={handleAddressChange} required />
               </div>
               <div className="veloce-profile-field">
                 <label htmlFor="address-addressLine1">Address line 1</label>
@@ -170,7 +206,7 @@ export default function Profile() {
               <div className="veloce-profile-field-row">
                 <div className="veloce-profile-field">
                   <label htmlFor="address-postalCode">Postal code</label>
-                  <input id="address-postalCode" name="postalCode" value={addressForm.postalCode} onChange={handleAddressChange} required />
+                  <input id="address-postalCode" name="postalCode" type="text" inputMode="numeric" maxLength={6} pattern="[0-9]{6}" autoComplete="postal-code" value={addressForm.postalCode} onChange={handleAddressChange} required />
                 </div>
                 <div className="veloce-profile-field">
                   <label htmlFor="address-country">Country</label>
@@ -188,8 +224,18 @@ export default function Profile() {
               </label>
               {addressError && <p className="veloce-address-error">{addressError}</p>}
               <button type="submit" className="veloce-auth-submit" disabled={isSavingAddress}>
-                {isSavingAddress ? 'Saving...' : 'Save address'}
+                {isSavingAddress ? 'Saving...' : editingAddressId ? 'Update address' : 'Save address'}
               </button>
+              {editingAddressId && (
+                <button
+                  type="button"
+                  className="veloce-address-cancel"
+                  onClick={handleCancelAddressEdit}
+                  disabled={isSavingAddress}
+                >
+                  Cancel
+                </button>
+              )}
             </form>
           </div>
         </div>
