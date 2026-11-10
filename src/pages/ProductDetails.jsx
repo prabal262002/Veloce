@@ -135,7 +135,7 @@ export default function ProductDetails() {
 
   const handlePrimaryAction = () => {
     if (inCart) {
-      navigate('/checkout');
+      navigate('/cart');
       return;
     }
 
@@ -294,7 +294,7 @@ export default function ProductDetails() {
               disabled={stock === 0}
               onClick={handlePrimaryAction}
             >
-              {stock === 0 ? 'Out of stock' : inCart ? 'Proceed to checkout' : 'Add to cart'}
+              {stock === 0 ? 'Out of stock' : inCart ? 'View cart' : 'Add to cart'}
             </button>
 
             <button

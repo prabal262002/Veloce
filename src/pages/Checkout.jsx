@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import useShop from "../context/useShop";
 import { formatProductCategory } from "../utils/productCategories";
 
@@ -17,15 +17,9 @@ const defaultAddressForm = {
 };
 
 export default function Checkout() {
-  const navigate = useNavigate();
   const {
     cart,
     products,
-    wishlist,
-    addToCart,
-    decrementCartQuantity,
-    removeFromCart,
-    toggleWishlist,
     authReady,
     isLoggedIn,
     cartError,
@@ -45,6 +39,7 @@ export default function Checkout() {
   const [promoMessage, setPromoMessage] = useState("");
   const [orderError, setOrderError] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState(null);
 
   const items = cart
     .map((item) => {
@@ -131,13 +126,6 @@ export default function Checkout() {
     }
   }
 
-  function moveToWishlist(product) {
-    if (!wishlist.includes(String(product._id))) {
-      toggleWishlist(product._id);
-    }
-    removeFromCart(product);
-  }
-
   function applyPromoCode() {
     const normalizedCode = promoInput.trim().toUpperCase();
     if (!normalizedCode) {
@@ -170,7 +158,7 @@ export default function Checkout() {
         addressId: String(selectedAddress._id),
         promoCode: appliedPromoCode,
       });
-      navigate(`/orders/${order._id}`, { replace: true });
+      setPlacedOrder(order);
     } catch (error) {
       setOrderError(error.message || "Unable to place your order.");
     } finally {
@@ -196,11 +184,11 @@ export default function Checkout() {
         <div className="checkout-shell">
           <div className="checkout-header">
             <div>
-              <p className="featured-products__eyebrow">VELOCE / CHECKOUT</p>
+              <p className="featured-products__eyebrow">VELOCE / ORDER SUMMARY</p>
               <h1>Sign in to continue</h1>
             </div>
             <Link className="product-details__link" to="/">
-              Continue shopping
+              Back to products
             </Link>
           </div>
           <div className="checkout-empty">
@@ -221,22 +209,31 @@ export default function Checkout() {
       <div className="checkout-shell">
         <div className="checkout-header">
           <div>
-            <p className="featured-products__eyebrow">VELOCE / CHECKOUT</p>
+            <p className="featured-products__eyebrow">VELOCE / ORDER SUMMARY</p>
             <h1>Review your order</h1>
           </div>
           <Link className="product-details__link" to="/">
-            Continue shopping
+            Back to products
           </Link>
         </div>
 
-        {items.length === 0 ? (
+        {placedOrder ? (
+          <div className="checkout-success" role="status" aria-live="polite">
+            <p className="featured-products__eyebrow">ORDER CONFIRMED</p>
+            <h2>Order Placed Successfully</h2>
+            {placedOrder.orderNumber && <p>Order {placedOrder.orderNumber}</p>}
+            <Link className="product-details__link" to="/">
+              Continue shopping
+            </Link>
+          </div>
+        ) : items.length === 0 ? (
           <div className="checkout-empty">
             <p>Your cart is empty.</p>
             <Link
               className="product-card__button product-card__button--primary checkout-empty__button"
-              to="/"
+              to="/cart"
             >
-              Browse gear
+              Back to cart
             </Link>
           </div>
         ) : (
@@ -464,7 +461,8 @@ export default function Checkout() {
                   </form>
                 )}
               </section>
-              <div className="checkout-items">
+              <div className="checkout-items checkout-order-items">
+                <h2>Order details</h2>
                 {cartError && (
                   <p className="checkout-cart-error" role="alert">
                     {cartError}
@@ -482,56 +480,9 @@ export default function Checkout() {
                     <div className="checkout-item__details">
                       <p className="checkout-item__category">{formatProductCategory(item.category)}</p>
                       <h2>{item.name}</h2>
-                      <div
-                        className="checkout-quantity"
-                        aria-label={`Quantity for ${item.name}`}
-                      >
-                        <button
-                          type="button"
-                          className="checkout-quantity__button"
-                          aria-label={
-                            item.quantity === 1
-                              ? `Remove ${item.name} from cart`
-                              : `Decrease quantity of ${item.name}`
-                          }
-                          onClick={() => decrementCartQuantity(item)}
-                        >
-                          −
-                        </button>
-                        <span
-                          className="checkout-quantity__value"
-                          aria-live="polite"
-                        >
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          className="checkout-quantity__button"
-                          aria-label={`Increase quantity of ${item.name}`}
-                          disabled={
-                            Number(item.quantity) >= Number(item.stock ?? 0)
-                          }
-                          onClick={() => addToCart(item)}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <div className="checkout-item__actions">
-                        <button
-                          type="button"
-                          className="checkout-item__action"
-                          onClick={() => moveToWishlist(item)}
-                        >
-                          Move to wishlist
-                        </button>
-                        <button
-                          type="button"
-                          className="checkout-item__action checkout-item__action--remove"
-                          onClick={() => removeFromCart(item)}
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      <p className="checkout-order-item__quantity">
+                        Quantity: {item.quantity} × ${Number(item.price).toFixed(2)}
+                      </p>
                     </div>
                     <strong>${Number(item.lineTotal).toFixed(2)}</strong>
                   </div>
@@ -594,7 +545,7 @@ export default function Checkout() {
                 disabled={isPlacingOrder || Boolean(cartError)}
                 className="product-card__button product-card__button--primary checkout-summary__button"
               >
-                {isPlacingOrder ? "Placing order..." : "Place order"}
+                {isPlacingOrder ? "Placing order..." : "Place Order"}
               </button>
             </aside>
           </div>

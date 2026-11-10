@@ -2079,7 +2079,10 @@ h1 {
 }
 
 .checkout-summary__button {
+  display: block;
   margin-top: 1rem;
+  text-align: center;
+  text-decoration: none;
 }
 
 .checkout-summary__button:disabled {
@@ -2116,6 +2119,49 @@ h1 {
 .checkout-confirmation__continue {
   display: inline-block;
   margin-top: 1.5rem;
+}
+
+.checkout-success {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  min-height: 36vh;
+  align-content: center;
+  border: 1px solid var(--border);
+  background: #1a1b1c;
+  text-align: center;
+}
+
+.checkout-success .featured-products__eyebrow,
+.checkout-success h2,
+.checkout-success p {
+  margin: 0;
+}
+
+.checkout-success h2 {
+  color: var(--text-h);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+}
+
+.checkout-success .product-details__link {
+  margin-top: 0.75rem;
+}
+
+.checkout-order-items > h2 {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.3rem;
+}
+
+.checkout-order-item__quantity,
+.cart-item__unit-price {
+  margin: 0.35rem 0 0;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.cart-layout {
+  align-items: start;
 }
 
 .orders-list {

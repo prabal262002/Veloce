@@ -209,7 +209,7 @@ export default function Header() {
               </Link>
               <Link
                 className="veloce-icon-link"
-                to="/checkout"
+                to="/cart"
                 aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}
                 title="Cart"
               >

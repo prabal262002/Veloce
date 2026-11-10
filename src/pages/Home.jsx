@@ -148,7 +148,7 @@ export default function Home() {
     const inCart = cart.some((item) => String(item.productId) === productId);
  
     if (inCart) {
-      navigate('/checkout');
+      navigate('/cart');
       return;
     }
 
@@ -445,7 +445,7 @@ export default function Home() {
                             handlePrimaryAction(product);
                           }}
                         >
-                          {outOfStock ? 'Out of stock' : inCart ? 'Proceed to checkout' : 'Add to cart'}
+                          {outOfStock ? 'Out of stock' : inCart ? 'View cart' : 'Add to cart'}
                         </button>
                       </div>
                     </>
