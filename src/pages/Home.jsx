@@ -31,6 +31,8 @@ export default function Home() {
   const [ratingSummaries, setRatingSummaries] = useState({});
   const [sortOrder, setSortOrder] = useState('featured');
   const categories = [...new Set(products.map((product) => product.category).filter(Boolean))];
+  const featuredCategories = categories.slice(0, 4);
+  const featuredProduct = products.find((product) => Number(product.stock ?? 0) > 0) || products[0];
   const maximumProductPrice = Math.max(1, ...products.map((product) => Number(product.price) || 0));
   const activePriceRange = priceValue ?? [0, maximumProductPrice];
   const productsMissingRatings = products.filter(
@@ -159,12 +161,22 @@ export default function Home() {
       : [...current, category]);
   };
 
+  const showCategory = (category) => {
+    setSelectedCategories([category]);
+    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const clearFilters = () => {
     setSelectedCategories([]);
     setInStockOnly(false);
     setPriceValue(null);
     setMinimumRating(0);
     setSortOrder('featured');
+  };
+
+  const showCatalog = () => {
+    clearFilters();
+    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   if (loading) {
@@ -177,11 +189,92 @@ export default function Home() {
 
   return (
     <div className="home-page">
+      {!searchTerm && featuredProduct && (
+        <section className="home-welcome" aria-label="Welcome to Veloce">
+          <div className="home-welcome__hero">
+            <div className="home-welcome__copy">
+              <p className="home-welcome__eyebrow">WELCOME TO VELOCE / RIDER EQUIPMENT</p>
+              <h1>Built for the ride ahead.</h1>
+              <p className="home-welcome__intro">
+                Find the gear that takes every ride further, from everyday essentials to your next upgrade.
+              </p>
+              <div className="home-welcome__featured">
+                <span>FEATURED PRODUCT</span>
+                <strong>{featuredProduct.name}</strong>
+                <b>${Number(featuredProduct.price).toFixed(2)}</b>
+              </div>
+              <div className="home-welcome__actions">
+                <button
+                  type="button"
+                  className="home-welcome__button"
+                  onClick={() => navigate(`/product/${featuredProduct._id}`)}
+                >
+                  Discover the product <span aria-hidden="true">↗</span>
+                </button>
+                <button type="button" className="home-welcome__text-button" onClick={showCatalog}>
+                  Explore all gear
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="home-welcome__image"
+              aria-label={`View ${featuredProduct.name}`}
+              onClick={() => navigate(`/product/${featuredProduct._id}`)}
+            >
+              <img
+                src={featuredProduct.images?.[0] || 'https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg'}
+                alt={featuredProduct.name}
+              />
+              <span className="home-welcome__image-label">VELOCE / SELECTED GEAR</span>
+            </button>
+          </div>
+
+          {featuredCategories.length > 0 && (
+            <div className="home-categories">
+              <div className="home-categories__heading">
+                <div>
+                  <p className="home-welcome__eyebrow">FIND YOUR NEXT UPGRADE</p>
+                  <h2>Shop by category</h2>
+                </div>
+                <button type="button" onClick={showCatalog}>
+                  Browse all categories <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+              <div className="home-categories__grid">
+                {featuredCategories.map((category, index) => {
+                  const productCount = products.filter((product) => product.category === category).length;
+                  return (
+                    <button
+                      type="button"
+                      className="home-category"
+                      key={category}
+                      onClick={() => showCategory(category)}
+                    >
+                      <span className="home-category__number">{String(index + 1).padStart(2, '0')}</span>
+                      <strong>{formatProductCategory(category)}</strong>
+                      <span className="home-category__count">
+                        {productCount} {productCount === 1 ? 'product' : 'products'}
+                      </span>
+                      <span className="home-category__arrow" aria-hidden="true">↗</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="featured-products" aria-labelledby="featured-title">
         <div className="featured-products__heading">
           <div>
             <p className="featured-products__eyebrow">VELOCE / RIDER EQUIPMENT</p>
-            <h1 id="featured-title">{searchTerm ? 'Search results' : 'Gear up. Get out.'}</h1>
+            {searchTerm || !featuredProduct ? (
+              <h1 id="featured-title">{searchTerm ? 'Search results' : 'Gear up. Get out.'}</h1>
+            ) : (
+              <h2 id="featured-title">Gear up. Get out.</h2>
+            )}
             <p className="featured-products__intro">
               {searchTerm
                 ? <>Showing results for <strong>{searchTerm}</strong>.</>
@@ -191,7 +284,7 @@ export default function Home() {
           <span className="featured-products__count">GEAR / {String(filteredProducts.length).padStart(2, '0')}</span>
         </div>
 
-        <div className="catalog-layout">
+        <div className="catalog-layout" id="catalog">
           <aside className="catalog-filters" aria-label="Product filters">
             <div className="catalog-filters__heading">
               <h2>Filters</h2>
