@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
 import ShopContext from './shopContext';
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
-  ? '/api'
-  : 'https://veloce-be-nine.vercel.app');
+const API_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.DEV ? 'http://localhost:5001' : 'https://veloce-be-nine.vercel.app'
+);
 const PRODUCTS_URL = `${API_URL}/products`;
 
 function getProductId(product) {
@@ -49,29 +48,6 @@ export default function ShopProvider({ children }) {
     return () => controller.abort();
   }, []);
 
-  async function refreshUser() {
-    try {
-      const response = await fetch(`${API_URL}/me`, { credentials: 'include' });
-      if (!response.ok) {
-        setUser(null);
-        cartRef.current = [];
-        setCart([]);
-        return null;
-      }
-
-      const result = await response.json();
-      const nextUser = result.user || null;
-      setUser(nextUser);
-      const savedCart = nextUser?.cart || [];
-      cartRef.current = savedCart;
-      setCart(savedCart);
-      return nextUser;
-    } catch {
-      setCartError('Unable to restore your saved cart.');
-      return null;
-    }
-  }
-
   useEffect(() => {
     let active = true;
 
@@ -114,112 +90,6 @@ export default function ShopProvider({ children }) {
     }
 
     return result.cart;
-  }
-
-  async function addAddress(address) {
-    const response = await fetch(`${API_URL}/addresses`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(address),
-    });
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Unable to save address.');
-    }
-
-    setUser((currentUser) => currentUser
-      ? { ...currentUser, addresses: result.addresses }
-      : currentUser);
-    return result;
-  }
-
-  async function updateAddress(addressId, address) {
-    const response = await fetch(`${API_URL}/addresses/${addressId}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(address),
-    });
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Unable to update address.');
-    }
-
-    setUser((currentUser) => currentUser
-      ? { ...currentUser, addresses: result.addresses }
-      : currentUser);
-    return result.addresses;
-  }
-
-  async function deleteAddress(addressId) {
-    const response = await fetch(`${API_URL}/addresses/${addressId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Unable to remove address.');
-    }
-
-    setUser((currentUser) => currentUser
-      ? { ...currentUser, addresses: result.addresses }
-      : currentUser);
-    return result.addresses;
-  }
-
-  async function createOrder({ addressId, promoCode }) {
-    await cartWriteQueue.current;
-    await sendCart(cartRef.current);
-
-    const response = await fetch(`${API_URL}/orders`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ addressId, promoCode }),
-    });
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Unable to place your order.');
-    }
-
-    cartRef.current = [];
-    setCart([]);
-    setCartError('');
-    setUser((currentUser) => currentUser
-      ? { ...currentUser, cart: [] }
-      : currentUser);
-    return result.order;
-  }
-
-  async function getOrder(orderId) {
-    const response = await fetch(`${API_URL}/orders/${orderId}`, {
-      credentials: 'include',
-    });
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Unable to fetch this order.');
-    }
-
-    return result.order;
-  }
-
-  async function getOrders() {
-    const response = await fetch(`${API_URL}/orders`, {
-      credentials: 'include',
-    });
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Unable to fetch your orders.');
-    }
-
-    return result.orders;
   }
 
   function persistCart(nextCart) {
@@ -292,10 +162,6 @@ export default function ShopProvider({ children }) {
     return authenticateWith('login', formData);
   }
 
-  async function googleSignIn(credential) {
-    return authenticateWith('auth/google', { credential });
-  }
-
   function logout() {
     fetch(`${API_URL}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     setUser(null);
@@ -337,32 +203,13 @@ export default function ShopProvider({ children }) {
     changeCartQuantity(product, -1);
   }
 
-  function removeFromCart(product) {
-    const productId = getProductId(product);
-    const item = cartRef.current.find(
-      (cartItem) => String(cartItem.productId) === productId,
-    );
-    if (item) changeCartQuantity(product, -Number(item.quantity));
-  }
-
   function toggleWishlist(product) {
     const productId = getProductId(product);
-    const isInWishlist = wishlist.includes(productId);
-    const productName = products.find(
-      (item) => getProductId(item) === productId,
-    )?.name;
-
     setWishlist((currentWishlist) =>
       currentWishlist.includes(productId)
         ? currentWishlist.filter((id) => id !== productId)
         : [...currentWishlist, productId],
     );
-
-    if (isInWishlist) {
-      toast.info(`${productName || 'Item'} removed from wishlist.`);
-    } else {
-      toast.success(`${productName || 'Item'} added to wishlist.`);
-    }
   }
 
   const value = {
@@ -377,18 +224,9 @@ export default function ShopProvider({ children }) {
     isLoggedIn: Boolean(user),
     signup,
     login,
-    googleSignIn,
     logout,
-    refreshUser,
-    addAddress,
-    updateAddress,
-    deleteAddress,
-    createOrder,
-    getOrder,
-    getOrders,
     addToCart,
     decrementCartQuantity,
-    removeFromCart,
     toggleWishlist,
   };
 

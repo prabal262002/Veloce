@@ -98,7 +98,7 @@ function ProductSearch({ initialQuery }) {
     event.preventDefault();
     const query = searchInput.trim();
     navigate({
-      pathname: '/',
+      pathname: '/products',
       search: query ? `?q=${encodeURIComponent(query)}` : '',
     });
   }
@@ -196,6 +196,7 @@ export default function Header() {
             />
 
             <div className="d-flex align-items-center gap-4 text-nowrap veloce-actions">
+              <Link to="/products">SHOP</Link>
               <Link
                 className="veloce-icon-link"
                 to="/wishlist"
@@ -263,6 +264,7 @@ export default function Header() {
                     setIsAuthOpen(true);
                   }}
                 >
+                  <img src="/user-avatar.svg" alt="" aria-hidden="true" />
                   Sign up
                 </button>
               )}
