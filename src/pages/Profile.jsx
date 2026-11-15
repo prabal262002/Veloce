@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import useShop from '../context/useShop';
 
 const defaultAddressForm = {
@@ -58,6 +59,7 @@ export default function Profile() {
       if (editingAddressId) {
         await updateAddress(editingAddressId, payload);
         setEditingAddressId('');
+        toast.success('Address updated successfully.');
       } else {
         await addAddress(payload);
       }

@@ -1,32 +1,40 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import RangeSliderModule from 'react-range-slider-input';
 import 'react-range-slider-input/dist/style.css';
 import useShop from '../context/useShop';
 import { formatProductCategory } from '../utils/productCategories';
 
 const RangeSlider = RangeSliderModule.default;
+const SORT_ORDERS = ['featured', 'price-asc', 'price-desc', 'name-asc'];
 
 export default function ProductListing() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { products, loading, error, cart, wishlist, addToCart, toggleWishlist } = useShop();
   const selectedCategories = searchParams.getAll('category');
   const searchQuery = searchParams.get('q') || '';
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [priceValue, setPriceValue] = useState(null);
-  const [sortOrder, setSortOrder] = useState('featured');
-  const [addedProductId, setAddedProductId] = useState(null);
+  const inStockOnly = searchParams.get('inStock') === '1';
   const categories = [...new Set(products.map((product) => product.category).filter(Boolean))];
   const maximumProductPrice = Math.max(1, ...products.map((product) => Number(product.price) || 0));
+  const minimumPriceParam = searchParams.get('minPrice');
+  const maximumPriceParam = searchParams.get('maxPrice');
+  const requestedMinimumPrice = Number(minimumPriceParam);
+  const requestedMaximumPrice = Number(maximumPriceParam);
+  const hasPriceRange = minimumPriceParam !== null
+    && maximumPriceParam !== null
+    && Number.isFinite(requestedMinimumPrice)
+    && Number.isFinite(requestedMaximumPrice)
+    && requestedMinimumPrice >= 0
+    && requestedMaximumPrice >= requestedMinimumPrice;
+  const priceValue = hasPriceRange
+    ? [
+        Math.min(requestedMinimumPrice, maximumProductPrice),
+        Math.min(requestedMaximumPrice, maximumProductPrice),
+      ]
+    : null;
   const activePriceRange = priceValue ?? [0, maximumProductPrice];
+  const requestedSortOrder = searchParams.get('sort');
+  const sortOrder = SORT_ORDERS.includes(requestedSortOrder) ? requestedSortOrder : 'featured';
   const normalizedQuery = searchQuery.trim().toLowerCase();
-
-  useEffect(() => {
-    if (!addedProductId) return undefined;
-    const timeoutId = window.setTimeout(() => setAddedProductId(null), 2400);
-    return () => window.clearTimeout(timeoutId);
-  }, [addedProductId]);
 
   const filteredProducts = products.filter((product) => {
     const price = Number(product.price ?? 0);
@@ -49,13 +57,23 @@ export default function ProductListing() {
     filteredProducts.sort((first, second) => first.name.localeCompare(second.name));
   }
 
-  function updateSelectedCategories(nextCategories) {
+  function updateCatalogParams(updates) {
     setSearchParams((current) => {
       const nextParams = new URLSearchParams(current);
-      nextParams.delete('category');
-      nextCategories.forEach((category) => nextParams.append('category', category));
+      Object.entries(updates).forEach(([key, value]) => {
+        nextParams.delete(key);
+        if (Array.isArray(value)) {
+          value.forEach((item) => nextParams.append(key, String(item)));
+        } else if (value !== null && value !== undefined && value !== '') {
+          nextParams.set(key, String(value));
+        }
+      });
       return nextParams;
     }, { replace: true });
+  }
+
+  function updateSelectedCategories(nextCategories) {
+    updateCatalogParams({ category: nextCategories });
   }
 
   function toggleCategory(category) {
@@ -66,21 +84,17 @@ export default function ProductListing() {
   }
 
   function clearFilters() {
-    updateSelectedCategories([]);
-    setInStockOnly(false);
-    setPriceValue(null);
-    setSortOrder('featured');
+    updateCatalogParams({
+      category: [],
+      inStock: null,
+      minPrice: null,
+      maxPrice: null,
+      sort: null,
+    });
   }
 
   function handlePrimaryAction(product) {
-    const productId = String(product._id);
-    const inCart = cart.some((item) => String(item.productId) === productId);
-    if (inCart) {
-      navigate('/cart');
-      return;
-    }
     addToCart(product);
-    setAddedProductId(productId);
   }
 
   if (loading) {
@@ -127,7 +141,7 @@ export default function ProductListing() {
                 <input
                   type="checkbox"
                   checked={inStockOnly}
-                  onChange={(event) => setInStockOnly(event.target.checked)}
+                  onChange={(event) => updateCatalogParams({ inStock: event.target.checked ? '1' : null })}
                 />
                 <span>In stock only</span>
               </label>
@@ -145,7 +159,10 @@ export default function ProductListing() {
                 max={maximumProductPrice}
                 step="any"
                 value={activePriceRange}
-                onInput={setPriceValue}
+                onInput={(nextRange) => updateCatalogParams({
+                  minPrice: nextRange[0],
+                  maxPrice: nextRange[1],
+                })}
                 ariaLabel={['Minimum price', 'Maximum price']}
               />
             </fieldset>
@@ -156,7 +173,11 @@ export default function ProductListing() {
               <span>{filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}</span>
               <label className="catalog-sort">
                 <span>Sort</span>
-                <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort products">
+                <select
+                  value={sortOrder}
+                  onChange={(event) => updateCatalogParams({ sort: event.target.value })}
+                  aria-label="Sort products"
+                >
                   <option value="featured">Featured</option>
                   <option value="price-asc">Price: low to high</option>
                   <option value="price-desc">Price: high to low</option>
@@ -220,7 +241,11 @@ export default function ProductListing() {
                             disabled={Number(product.stock ?? 0) === 0}
                             onClick={() => handlePrimaryAction(product)}
                           >
-                            {Number(product.stock ?? 0) === 0 ? 'Out of stock' : inCart ? 'View cart' : 'Add to cart'}
+                            {Number(product.stock ?? 0) === 0
+                              ? 'Out of stock'
+                              : inCart
+                                ? 'Add another'
+                                : 'Add to cart'}
                           </button>
                         </div>
                       </div>
@@ -240,12 +265,6 @@ export default function ProductListing() {
           </div>
         </div>
       </section>
-      {addedProductId && (
-        <div className="cart-feedback" role="status" aria-live="polite">
-          <span className="cart-feedback__check" aria-hidden="true">✓</span>
-          <span>Added to cart</span>
-        </div>
-      )}
     </div>
   );
 }

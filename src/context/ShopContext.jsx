@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import ShopContext from './shopContext';
 
 const API_URL = import.meta.env.VITE_API_URL || (
@@ -92,6 +93,61 @@ export default function ShopProvider({ children }) {
     return result.cart;
   }
 
+  async function addAddress(address) {
+    const response = await fetch(`${API_URL}/addresses`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(address),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to save address.');
+    }
+
+    setUser((currentUser) => currentUser
+      ? { ...currentUser, addresses: result.addresses }
+      : currentUser);
+    return result;
+  }
+
+  async function updateAddress(addressId, address) {
+    const response = await fetch(`${API_URL}/addresses/${addressId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(address),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to update address.');
+    }
+
+    setUser((currentUser) => currentUser
+      ? { ...currentUser, addresses: result.addresses }
+      : currentUser);
+    return result;
+  }
+
+  async function deleteAddress(addressId) {
+    const response = await fetch(`${API_URL}/addresses/${addressId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to remove address.');
+    }
+
+    setUser((currentUser) => currentUser
+      ? { ...currentUser, addresses: result.addresses }
+      : currentUser);
+    return result.addresses;
+  }
+
   function persistCart(nextCart) {
     cartWriteQueue.current = cartWriteQueue.current
       .catch(() => {})
@@ -172,6 +228,7 @@ export default function ShopProvider({ children }) {
 
   function changeCartQuantity(product, amount) {
     const productId = getProductId(product);
+    const productName = product?.name || 'Product';
     const stock = Number(product?.stock ?? 0);
     const currentCart = cartRef.current;
     const existingItem = currentCart.find((item) => String(item.productId) === productId);
@@ -181,6 +238,7 @@ export default function ShopProvider({ children }) {
     if (nextQuantity <= 0) {
       nextCart = currentCart.filter((item) => String(item.productId) !== productId);
     } else if (nextQuantity > stock) {
+      toast.info(`Maximum available quantity reached for ${productName}.`);
       return;
     } else if (existingItem) {
       nextCart = currentCart.map((item) =>
@@ -193,6 +251,16 @@ export default function ShopProvider({ children }) {
     cartRef.current = nextCart;
     setCart(nextCart);
     if (user) persistCart(nextCart);
+
+    if (nextQuantity <= 0) {
+      toast.success(`${productName} removed from your cart.`);
+    } else if (amount > 0) {
+      toast.success(existingItem
+        ? `${productName} quantity increased to ${nextQuantity}.`
+        : `${productName} added to your cart.`);
+    } else {
+      toast.success(`${productName} quantity decreased to ${nextQuantity}.`);
+    }
   }
 
   function addToCart(product) {
@@ -201,6 +269,14 @@ export default function ShopProvider({ children }) {
 
   function decrementCartQuantity(product) {
     changeCartQuantity(product, -1);
+  }
+
+  function removeFromCart(product) {
+    const productId = getProductId(product);
+    const existingItem = cartRef.current.find((item) => String(item.productId) === productId);
+    if (existingItem) {
+      changeCartQuantity(product, -Number(existingItem.quantity));
+    }
   }
 
   function toggleWishlist(product) {
@@ -225,8 +301,12 @@ export default function ShopProvider({ children }) {
     signup,
     login,
     logout,
+    addAddress,
+    updateAddress,
+    deleteAddress,
     addToCart,
     decrementCartQuantity,
+    removeFromCart,
     toggleWishlist,
   };
 

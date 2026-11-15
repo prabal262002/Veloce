@@ -22,7 +22,6 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const { products, cart, wishlist, addToCart, toggleWishlist, isLoggedIn } = useShop();
   const [selectedImage, setSelectedImage] = useState({ productId: id, index: 0 });
-  const [addedProductId, setAddedProductId] = useState(null);
   const [reviewData, setReviewData] = useState(null);
   const [reviewError, setReviewError] = useState(null);
   const [myReviewData, setMyReviewData] = useState(null);
@@ -90,18 +89,6 @@ export default function ProductDetails() {
     };
   }, [id, isLoggedIn]);
 
-  useEffect(() => {
-    if (!addedProductId) {
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setAddedProductId(null);
-    }, 2400);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [addedProductId]);
-
   const product = products.find((item) => String(item._id) === String(id));
 
   if (!product) {
@@ -130,16 +117,6 @@ export default function ProductDetails() {
 
   const handleAddToCart = () => {
     addToCart(product);
-    setAddedProductId(productId);
-  };
-
-  const handlePrimaryAction = () => {
-    if (inCart) {
-      navigate('/cart');
-      return;
-    }
-
-    handleAddToCart();
   };
 
   async function handleLoadMoreReviews() {
@@ -292,15 +269,16 @@ export default function ProductDetails() {
               type="button"
               className={`product-card__button product-card__button--primary${inCart ? ' is-in-cart' : ''}`}
               disabled={stock === 0}
-              onClick={handlePrimaryAction}
+              onClick={handleAddToCart}
             >
-              {stock === 0 ? 'Out of stock' : inCart ? 'View cart' : 'Add to cart'}
+              {stock === 0 ? 'Out of stock' : inCart ? 'Add another' : 'Add to cart'}
             </button>
 
             <button
               type="button"
               className="product-card__button product-card__button--ghost product-details__buy-button"
-              onClick={handlePrimaryAction}
+              disabled={stock === 0}
+              onClick={handleAddToCart}
             >
               Buy now
             </button>
@@ -429,12 +407,6 @@ export default function ProductDetails() {
           </div>
         </div>
       </section>
-      {addedProductId === productId && (
-        <div className="cart-feedback" role="status" aria-live="polite">
-          <span className="cart-feedback__check" aria-hidden="true">✓</span>
-          <span>Added to cart</span>
-        </div>
-      )}
     </div>
   );
 }

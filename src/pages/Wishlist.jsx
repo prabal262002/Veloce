@@ -12,11 +12,6 @@ export default function Wishlist() {
     .filter(Boolean);
 
   const handleProductAction = (product) => {
-    const inCart = cart.some((item) => String(item.productId) === String(product._id));
-    if (inCart) {
-      navigate('/cart');
-      return;
-    }
     addToCart(product);
   };
 
@@ -75,7 +70,11 @@ export default function Wishlist() {
                       disabled={outOfStock}
                       onClick={() => handleProductAction(product)}
                     >
-                      {outOfStock ? 'Out of stock' : inCart ? 'View cart' : 'Add to cart'}
+                      {outOfStock
+                        ? 'Out of stock'
+                        : inCart
+                          ? 'Add another'
+                          : 'Add to cart'}
                     </button>
                     <button
                       type="button"
