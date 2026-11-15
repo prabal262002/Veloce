@@ -218,6 +218,10 @@ export default function ShopProvider({ children }) {
     return authenticateWith('login', formData);
   }
 
+  async function googleSignIn(credential) {
+    return authenticateWith('auth/google', { credential });
+  }
+
   function logout() {
     fetch(`${API_URL}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     setUser(null);
@@ -300,6 +304,7 @@ export default function ShopProvider({ children }) {
     isLoggedIn: Boolean(user),
     signup,
     login,
+    googleSignIn,
     logout,
     addAddress,
     updateAddress,
