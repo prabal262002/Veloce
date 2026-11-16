@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import useShop from "../context/useShop";
 import { formatProductCategory } from "../utils/productCategories";
-
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
-  ? "/api"
-  : "https://veloce-be-nine.vercel.app");
+import API_URL from "../utils/api";
 
 function formatPrice(amount) {
   return `$${Number(amount).toFixed(2)}`;

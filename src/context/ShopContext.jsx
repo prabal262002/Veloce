@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import ShopContext from './shopContext';
-
-const API_URL = import.meta.env.VITE_API_URL || (
-  import.meta.env.DEV ? 'http://localhost:5001' : 'https://veloce-be-nine.vercel.app'
-);
+import API_URL from '../utils/api';
 const PRODUCTS_URL = `${API_URL}/products`;
 
 function getProductId(product) {

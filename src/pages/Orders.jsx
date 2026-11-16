@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import useShop from "../context/useShop";
+import API_URL from "../utils/api";
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD
-  ? "/api"
-  : "https://veloce-be-nine.vercel.app");
+const FALLBACK_ORDER_IMAGE = "https://images.pexels.com/photos/20522567/pexels-photo-20522567.jpeg";
 
 function formatPrice(amount) {
   return `$${Number(amount).toFixed(2)}`;
@@ -87,16 +86,42 @@ export default function Orders() {
           </div>
         ) : (
           <div className="orders-list">
-            {orders.map((order) => (
-              <Link className="orders-list__item" to={`/orders/${order._id}`} key={order._id}>
-                <div>
-                  <span className="featured-products__eyebrow">{order.orderNumber}</span>
-                  <p>{new Date(order.createdAt).toLocaleDateString()}</p>
-                  <small>{order.items.length} {order.items.length === 1 ? "item" : "items"} · {order.status}</small>
-                </div>
-                <strong>{formatPrice(order.total)}</strong>
-              </Link>
-            ))}
+            {orders.map((order) => {
+              const firstItem = order.items?.[0];
+              const itemCount = order.items?.length || 0;
+
+              return (
+                <Link
+                  className="orders-list__item"
+                  to={`/orders/${order._id}`}
+                  key={order._id}
+                  aria-label={`View order ${order.orderNumber}`}
+                >
+                  <img
+                    className="orders-list__image"
+                    src={firstItem?.image || FALLBACK_ORDER_IMAGE}
+                    alt={firstItem?.name || "Order item"}
+                    loading="lazy"
+                  />
+                  <div className="orders-list__details">
+                    <span className="featured-products__eyebrow">{order.orderNumber}</span>
+                    <p className="orders-list__date">
+                      Placed {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                    <div className="orders-list__meta">
+                      <span>{itemCount} {itemCount === 1 ? "item" : "items"}</span>
+                      <span className={`orders-list__status orders-list__status--${order.status}`}>
+                        {order.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="orders-list__total">
+                    <strong>{formatPrice(order.total)}</strong>
+                    <span>View order <span aria-hidden="true">→</span></span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
