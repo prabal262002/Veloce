@@ -5,7 +5,7 @@ import useShop from '../context/useShop';
 import { formatProductCategory } from '../utils/productCategories';
 
 const RangeSlider = RangeSliderModule.default;
-const SORT_ORDERS = ['featured', 'price-asc', 'price-desc', 'name-asc'];
+const SORT_ORDERS = ['featured', 'price-asc', 'price-desc', 'name-asc', 'rating-desc'];
 
 export default function ProductListing() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -55,6 +55,11 @@ export default function ProductListing() {
     filteredProducts.sort((first, second) => Number(second.price ?? 0) - Number(first.price ?? 0));
   } else if (sortOrder === 'name-asc') {
     filteredProducts.sort((first, second) => first.name.localeCompare(second.name));
+  } else if (sortOrder === 'rating-desc') {
+    filteredProducts.sort((first, second) =>
+      Number(second.ratingAverage ?? 0) - Number(first.ratingAverage ?? 0)
+      || Number(second.reviewCount ?? 0) - Number(first.reviewCount ?? 0),
+    );
   }
 
   function updateCatalogParams(updates) {
@@ -182,6 +187,7 @@ export default function ProductListing() {
                   <option value="price-asc">Price: low to high</option>
                   <option value="price-desc">Price: high to low</option>
                   <option value="name-asc">Name: A to Z</option>
+                  <option value="rating-desc">Top rated</option>
                 </select>
               </label>
             </div>
