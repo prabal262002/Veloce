@@ -119,6 +119,13 @@ export default function ProductDetails() {
     addToCart(product);
   };
 
+  const handleBuyNow = () => {
+    if (!inCart) {
+      addToCart(product);
+    }
+    navigate('/checkout');
+  };
+
   async function handleLoadMoreReviews() {
     const nextPage = reviewData.pagination.page + 1;
     setIsLoadingMoreReviews(true);
@@ -278,7 +285,7 @@ export default function ProductDetails() {
               type="button"
               className="product-card__button product-card__button--ghost product-details__buy-button"
               disabled={stock === 0}
-              onClick={handleAddToCart}
+              onClick={handleBuyNow}
             >
               Buy now
             </button>

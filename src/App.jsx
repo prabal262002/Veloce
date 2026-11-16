@@ -35,7 +35,11 @@ function App() {
       </main>
 
       <Footer />
-      <ToastContainer />
+      <ToastContainer
+        className="veloce-toast-container"
+        position="top-right"
+        newestOnTop
+      />
       </ShopProvider>
     </>
   )

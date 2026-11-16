@@ -2491,3 +2491,75 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+.veloce-toast-container .Toastify__toast {
+  min-height: 64px;
+  border: 1px solid #3a3d3f;
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  padding: 0.8rem 1rem;
+  background: #181a1c;
+  box-shadow: var(--shadow);
+  color: #e6e8e7;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  letter-spacing: 0.02rem;
+}
+
+.veloce-toast-container .Toastify__toast--success {
+  border-left-color: #a9d6ae;
+}
+
+.veloce-toast-container .Toastify__toast--info {
+  border-left-color: var(--accent);
+}
+
+.veloce-toast-container .Toastify__toast--warning {
+  border-left-color: #f0b84c;
+}
+
+.veloce-toast-container .Toastify__toast--error {
+  border-left-color: var(--accent-soft);
+}
+
+.veloce-toast-container .Toastify__toast-body {
+  margin: 0;
+  padding: 0.1rem 0;
+}
+
+.veloce-toast-container .Toastify__close-button {
+  align-self: center;
+  color: #a8adb5;
+  opacity: 0.8;
+}
+
+.veloce-toast-container .Toastify__close-button:hover,
+.veloce-toast-container .Toastify__close-button:focus {
+  color: var(--text-h);
+  opacity: 1;
+}
+
+.veloce-toast-container .Toastify__progress-bar {
+  height: 2px;
+  background: var(--accent);
+}
+
+.veloce-toast-container .Toastify__progress-bar--success {
+  background: #a9d6ae;
+}
+
+.veloce-toast-container .Toastify__progress-bar--warning {
+  background: #f0b84c;
+}
+
+.veloce-toast-container .Toastify__progress-bar--error {
+  background: var(--accent-soft);
+}
+
+@media (max-width: 480px) {
+  .veloce-toast-container {
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+  }
+}
