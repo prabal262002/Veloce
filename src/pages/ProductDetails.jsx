@@ -258,10 +258,14 @@ export default function ProductDetails() {
                   {'☆'.repeat(5 - Math.round(currentReviewData.summary.averageRating))}
                 </span>
                 <strong>{currentReviewData.summary.averageRating.toFixed(1)}</strong>
-                <span>{currentReviewData.summary.reviewCount} reviews</span>
+                <span className="product-details__rating-count">
+                  {currentReviewData.summary.reviewCount} reviews
+                </span>
               </>
             ) : (
-              <span>{currentReviewData ? 'Be the first to review' : 'Loading rating...'}</span>
+              <span className="product-details__rating-cta">
+                {currentReviewData ? 'Be the first to review' : 'Loading rating...'}
+              </span>
             )}
           </a>
 
