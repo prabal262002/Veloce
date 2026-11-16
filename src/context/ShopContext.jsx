@@ -148,6 +148,30 @@ export default function ShopProvider({ children }) {
     return result.addresses;
   }
 
+  async function createOrder({ addressId, promoCode }) {
+    await cartWriteQueue.current;
+
+    const response = await fetch(`${API_URL}/orders`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addressId, promoCode }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Unable to place your order.');
+    }
+
+    cartRef.current = [];
+    setCart([]);
+    setCartError('');
+    setUser((currentUser) => currentUser
+      ? { ...currentUser, cart: [] }
+      : currentUser);
+    return result.order;
+  }
+
   function persistCart(nextCart) {
     cartWriteQueue.current = cartWriteQueue.current
       .catch(() => {})
@@ -309,6 +333,7 @@ export default function ShopProvider({ children }) {
     addAddress,
     updateAddress,
     deleteAddress,
+    createOrder,
     addToCart,
     decrementCartQuantity,
     removeFromCart,

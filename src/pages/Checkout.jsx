@@ -142,7 +142,7 @@ export default function Checkout() {
 
     setAppliedPromoCode(normalizedCode);
     setPromoInput(normalizedCode);
-    setPromoMessage("VELOCE10 applied — you saved 10%.");
+    setPromoMessage("");
   }
 
   async function handlePlaceOrder() {
@@ -513,8 +513,23 @@ export default function Checkout() {
                     {appliedPromoCode ? "Applied" : "Apply"}
                   </button>
                 </div>
-                <p className={appliedPromoCode ? "is-success" : ""} role="status">
-                  {promoMessage || "Use VELOCE10 for 10% off your items."}
+                <p
+                  className={`checkout-promo__message${appliedPromoCode
+                    ? " is-success"
+                    : promoMessage ? " is-error" : ""}`}
+                  role="status"
+                >
+                  {appliedPromoCode ? (
+                    <>
+                      <strong className="checkout-promo__code">{appliedPromoCode}</strong>
+                      {" "}applied — you saved 10%.
+                    </>
+                  ) : promoMessage || (
+                    <>
+                      Save 10% with code{" "}
+                      <strong className="checkout-promo__code">VELOCE10</strong>.
+                    </>
+                  )}
                 </p>
               </div>
               <div className="checkout-summary__row">
