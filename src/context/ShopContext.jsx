@@ -14,6 +14,7 @@ export default function ShopProvider({ children }) {
   const [error, setError] = useState(null);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
+  const wishlistRef = useRef(wishlist);
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [cartError, setCartError] = useState('');
@@ -306,11 +307,18 @@ export default function ShopProvider({ children }) {
 
   function toggleWishlist(product) {
     const productId = getProductId(product);
-    setWishlist((currentWishlist) =>
-      currentWishlist.includes(productId)
-        ? currentWishlist.filter((id) => id !== productId)
-        : [...currentWishlist, productId],
-    );
+    const productName = product?.name
+      || products.find((entry) => String(entry._id) === productId)?.name
+      || 'Product';
+    const isWishlisted = wishlistRef.current.includes(productId);
+    const nextWishlist = isWishlisted
+      ? wishlistRef.current.filter((id) => id !== productId)
+      : [...wishlistRef.current, productId];
+    wishlistRef.current = nextWishlist;
+    setWishlist(nextWishlist);
+    toast.success(isWishlisted
+      ? `${productName} removed from your wishlist.`
+      : `${productName} added to your wishlist.`);
   }
 
   const value = {

@@ -13,6 +13,12 @@ export default function ProductListing() {
   const selectedCategories = searchParams.getAll('category');
   const searchQuery = searchParams.get('q') || '';
   const inStockOnly = searchParams.get('inStock') === '1';
+  const requestedMinimumRating = Number(searchParams.get('minRating'));
+  const minimumRating = Number.isFinite(requestedMinimumRating)
+    && requestedMinimumRating >= 1
+    && requestedMinimumRating <= 5
+    ? requestedMinimumRating
+    : 0;
   const categories = [...new Set(products.map((product) => product.category).filter(Boolean))];
   const maximumProductPrice = Math.max(1, ...products.map((product) => Number(product.price) || 0));
   const minimumPriceParam = searchParams.get('minPrice');
@@ -45,8 +51,9 @@ export default function ProductListing() {
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
     const matchesAvailability = !inStockOnly || Number(product.stock ?? 0) > 0;
     const matchesPrice = price >= activePriceRange[0] && price <= activePriceRange[1];
+    const matchesRating = Number(product.ratingAverage ?? 0) >= minimumRating;
     const matchesQuery = !normalizedQuery || searchableText.includes(normalizedQuery);
-    return matchesCategory && matchesAvailability && matchesPrice && matchesQuery;
+    return matchesCategory && matchesAvailability && matchesPrice && matchesRating && matchesQuery;
   });
 
   if (sortOrder === 'price-asc') {
@@ -94,6 +101,7 @@ export default function ProductListing() {
       inStock: null,
       minPrice: null,
       maxPrice: null,
+      minRating: null,
       sort: null,
     });
   }
@@ -149,6 +157,23 @@ export default function ProductListing() {
                   onChange={(event) => updateCatalogParams({ inStock: event.target.checked ? '1' : null })}
                 />
                 <span>In stock only</span>
+              </label>
+            </fieldset>
+            <fieldset className="catalog-filters__group">
+              <legend>Rating</legend>
+              <label className="catalog-sort">
+                <span className="visually-hidden">Minimum rating</span>
+                <select
+                  value={minimumRating || ''}
+                  onChange={(event) => updateCatalogParams({ minRating: event.target.value })}
+                  aria-label="Filter by minimum rating"
+                >
+                  <option value="">All ratings</option>
+                  <option value="4">4 stars &amp; up</option>
+                  <option value="3">3 stars &amp; up</option>
+                  <option value="2">2 stars &amp; up</option>
+                  <option value="1">1 star &amp; up</option>
+                </select>
               </label>
             </fieldset>
             <fieldset className="catalog-filters__group">

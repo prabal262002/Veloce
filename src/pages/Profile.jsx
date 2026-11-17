@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import useShop from '../context/useShop';
 
-const defaultAddressForm = {
+const createDefaultAddressForm = () => ({
   label: 'Home',
   fullName: '',
   phone: '',
@@ -14,11 +14,11 @@ const defaultAddressForm = {
   postalCode: '',
   country: '',
   isDefault: false,
-};
+});
 
 export default function Profile() {
   const { user, isLoggedIn, logout, addAddress, updateAddress, deleteAddress } = useShop();
-  const [addressForm, setAddressForm] = useState(defaultAddressForm);
+  const [addressForm, setAddressForm] = useState(createDefaultAddressForm);
   const [editingAddressId, setEditingAddressId] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState('');
@@ -63,7 +63,7 @@ export default function Profile() {
       } else {
         await addAddress(payload);
       }
-      setAddressForm(defaultAddressForm);
+      setAddressForm(createDefaultAddressForm());
     } catch (error) {
       setAddressError(error.message || 'Unable to save address.');
     } finally {
@@ -82,7 +82,7 @@ export default function Profile() {
   const handleEditAddress = (address) => {
     setAddressError('');
     setAddressForm({
-      ...defaultAddressForm,
+      ...createDefaultAddressForm(),
       ...address,
       isDefault: Boolean(address.isDefault),
     });
@@ -91,7 +91,7 @@ export default function Profile() {
 
   const handleCancelAddressEdit = () => {
     setAddressError('');
-    setAddressForm(defaultAddressForm);
+    setAddressForm(createDefaultAddressForm());
     setEditingAddressId('');
   };
 
