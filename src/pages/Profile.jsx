@@ -74,6 +74,7 @@ export default function Profile() {
   const handleDeleteAddress = async (addressId) => {
     try {
       await deleteAddress(addressId);
+      toast.success('Address deleted successfully.');
     } catch (error) {
       setAddressError(error.message || 'Unable to delete the address.');
     }
